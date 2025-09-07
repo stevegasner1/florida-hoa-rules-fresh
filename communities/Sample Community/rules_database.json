@@ -1,0 +1,77 @@
+{
+  "rules": {
+    "architectural": {
+      "paint_colors": {
+        "title": "Approved Paint Colors",
+        "content": "Exterior paint colors must be from the approved color palette",
+        "document": "bylaws.txt",
+        "section": "Article III, Section 3",
+        "last_updated": "2024-01-15"
+      },
+      "fences": {
+        "title": "Fence Requirements", 
+        "content": "Fences must be approved and cannot exceed 6 feet in height",
+        "document": "covenants.txt",
+        "section": "Article II, Section 1",
+        "last_updated": "2024-01-15"
+      }
+    },
+    "pets": {
+      "registration": {
+        "title": "Pet Registration",
+        "content": "All pets must be registered with the management office within 30 days",
+        "document": "bylaws.txt", 
+        "section": "Article IV, Section 1",
+        "last_updated": "2024-01-15"
+      },
+      "leash_policy": {
+        "title": "Leash Requirements",
+        "content": "Dogs must be on leash at all times when outside of owner's unit",
+        "document": "bylaws.txt",
+        "section": "Article IV, Section 2", 
+        "last_updated": "2024-01-15"
+      }
+    },
+    "parking": {
+      "assigned_spaces": {
+        "title": "Assigned Parking Spaces",
+        "content": "Each unit is assigned two parking spaces",
+        "document": "bylaws.txt",
+        "section": "Article V, Section 1",
+        "last_updated": "2024-01-15"
+      }
+    },
+    "rentals": {
+      "short_term": {
+        "title": "Short-term Rental Restrictions", 
+        "content": "Short-term rentals of less than 30 days are prohibited",
+        "document": "covenants.txt",
+        "section": "Article I, Section 2",
+        "last_updated": "2024-01-15"
+      }
+    },
+    "noise": {
+      "quiet_hours": {
+        "title": "Quiet Hours",
+        "content": "Quiet hours are from 10:00 PM to 7:00 AM daily",
+        "document": "covenants.txt", 
+        "section": "Article III, Section 1",
+        "last_updated": "2024-01-15"
+      }
+    }
+  },
+  "categories": [
+    "architectural",
+    "landscaping", 
+    "pets",
+    "parking",
+    "noise",
+    "rentals",
+    "fees",
+    "maintenance",
+    "common_areas",
+    "governance"
+  ],
+  "last_updated": "2024-01-15T10:00:00Z",
+  "version": "1.0"
+}
