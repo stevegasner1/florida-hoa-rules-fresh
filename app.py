@@ -192,149 +192,16 @@ florida_hoa_rules = {
             ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
             ("Sunshine Law Guide", "https://www.myflorida.com/myflorida/government/governmentinformation/sunshine_law.html")
         ]
-    },
-    
-    "board_quorum_requirements_fl": {
-        "content": "Florida Statute 720.306 requires a majority of board members to constitute a quorum for conducting HOA business. For a 5-member board, 3 members are required; for a 7-member board, 4 members are required. Decisions require a majority vote of those present at a properly noticed meeting.",
-        "boca_ridge_example": "Boca Ridge Glen HOA Board requires a majority of directors present to conduct official business, following Florida statutory quorum requirements for valid board actions and voting procedures.",
-        "statute": "720.306",
-        "links": [
-            ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
-            ("Board Governance Guide", "https://www.caionline.org/StateChapters/Florida/Pages/default.aspx")
-        ]
-    },
-    
-    "board_composition_fl": {
-        "content": "Florida HOA boards typically consist of 3, 5, or 7 members as specified in governing documents. Florida Statute 720.306 governs board member eligibility, terms, and election procedures.",
-        "boca_ridge_example": "Boca Ridge Glen Board of Directors composition and member terms are established in the community bylaws in compliance with Florida HOA governance requirements.",
-        "statute": "720.306",
-        "links": [
-            ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
-            ("Board Structure Guidelines", "https://www.caionline.org/")
-        ]
-    },
-    
-    "contract_bidding_requirements_fl": {
-        "content": "Florida Statute 720.3055 requires HOAs to obtain competitive bids for contracts exceeding certain thresholds. While not mandating a specific number of bids, boards must act in good faith and in the best interests of the association. Many associations require 3 bids for major contracts as a best practice.",
-        "boca_ridge_example": "Boca Ridge Glen follows prudent business practices by obtaining multiple competitive bids for major contracts such as landscaping, maintenance, and capital improvements to ensure cost-effectiveness and quality services.",
-        "statute": "720.3055",
-        "links": [
-            ("Florida Statute 720.3055", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.3055.html"),
-            ("Procurement Best Practices", "https://www.caionline.org/"),
-            ("Competitive Bidding Guide", "https://www.apra-usa.com/")
-        ]
-    },
-    
-    "vendor_selection_fl": {
-        "content": "Florida HOA boards have fiduciary duty to select vendors and contractors in the association's best interest. While no specific bid requirement exists in Florida law, obtaining multiple competitive proposals is considered a best practice for transparency and cost control.",
-        "boca_ridge_example": "Boca Ridge Glen vendor selection process includes evaluation of qualifications, references, insurance coverage, and competitive pricing to ensure quality services at reasonable costs for the community.",
-        "statute": "720.3055 (Fiduciary Duty)",
-        "links": [
-            ("Vendor Management Guide", "https://www.caionline.org/"),
-            ("HOA Best Practices", "https://www.apra-usa.com/")
-        ]
     }
 }
 
 st.markdown("## 🔍 Search Florida HOA Laws and Community Rules")
-st.info("🤖 **NEW**: Dynamic search now handles ANY HOA question - ask about noise rules, solar panels, flags, elections, or any other topic!")
-
-# Initialize session state for query tracking
-if 'previous_query' not in st.session_state:
-    st.session_state.previous_query = ""
-
 query = st.text_input(
     "Ask any question about Florida HOA laws and community rules:",
-    placeholder="e.g., noise restrictions, solar panel installation, flag display rights, HOA elections",
-    key="search_input"
+    placeholder="e.g., Boca Ridge Glen pet policies, architectural review, assessment collection"
 )
 
-# Clear results if query changed
-if query != st.session_state.previous_query:
-    st.session_state.previous_query = query
-
-# Dynamic response generator for open-ended queries
-def generate_dynamic_response(query):
-    """Generate dynamic HOA responses for queries not covered by existing rules"""
-    
-    # Common HOA topics and their Florida law context
-    hoa_knowledge_base = {
-        'noise': {
-            'statutes': ['720.305 (Violation Procedures)'],
-            'content': 'Florida HOAs can establish reasonable noise restrictions to maintain peaceful enjoyment of properties. Enforcement follows FL Statute 720.305 violation procedures.',
-            'examples': ['Quiet hours (typically 10 PM - 7 AM)', 'Construction noise limits', 'Party/gathering restrictions', 'HVAC equipment placement rules']
-        },
-        'solar': {
-            'statutes': ['163.04 (Solar Rights)', '720.3075 (Property Rights)'],
-            'content': 'Florida Statute 163.04 protects homeowner rights to install solar collectors. HOAs cannot prohibit solar installations but may impose reasonable aesthetic restrictions.',
-            'examples': ['Solar panel placement guidelines', 'Roof installation approval process', 'Aesthetic screening requirements', 'Energy efficiency improvements']
-        },
-        'flag': {
-            'statutes': ['720.3075 (Display Rights)'],
-            'content': 'Florida law protects the right to display the US flag, Florida state flag, and military service flags. HOAs may establish reasonable size and placement restrictions.',
-            'examples': ['American flag display rights', 'Military service flag protection', 'Holiday decoration guidelines', 'Political sign restrictions']
-        },
-        'storage': {
-            'statutes': ['720 (General Covenants)'],
-            'content': 'Florida HOAs commonly restrict outdoor storage to maintain community appearance and property values through architectural guidelines.',
-            'examples': ['Garage storage requirements', 'Shed installation approval', 'Pool equipment screening', 'Trash container placement']
-        },
-        'security': {
-            'statutes': ['720.301 (Common Areas)', '768.28 (Liability)'],
-            'content': 'Florida HOAs may provide security services and establish access control measures for common areas while managing liability considerations.',
-            'examples': ['Gated community access', 'Security patrol services', 'Camera surveillance systems', 'Guest registration procedures']
-        },
-        'insurance': {
-            'statutes': ['720.3085 (Financial Management)'],
-            'content': 'Florida law requires HOAs to maintain appropriate insurance coverage and may require individual owners to carry specific insurance types.',
-            'examples': ['Hurricane/windstorm coverage', 'Flood insurance requirements', 'Liability insurance minimums', 'Building coverage responsibilities']
-        },
-        'election': {
-            'statutes': ['720.306 (Board Elections)'],
-            'content': 'Florida Statute 720.306 governs HOA board elections including candidate eligibility, voting procedures, and term limits.',
-            'examples': ['Annual election requirements', 'Candidate qualification rules', 'Voting method procedures', 'Term limit restrictions']
-        },
-        'budget': {
-            'statutes': ['720.308 (Budgets and Financial Reports)'],
-            'content': 'Florida law requires HOAs to prepare annual budgets, provide financial reports to owners, and follow specific assessment procedures.',
-            'examples': ['Annual budget adoption', 'Financial statement distribution', 'Assessment increase limitations', 'Reserve fund requirements']
-        }
-    }
-    
-    query_lower = query.lower()
-    
-    # Find matching topics
-    for topic, info in hoa_knowledge_base.items():
-        if topic in query_lower or any(keyword in query_lower for keyword in [topic + 's', topic + 'ing']):
-            return {
-                'type': 'dynamic',
-                'title': f'Florida HOA {topic.title()} Requirements',
-                'content': info['content'],
-                'statute': ', '.join(info['statutes']),
-                'examples': info['examples'],
-                'boca_example': f'Boca Ridge Glen would handle {topic} matters according to Florida statutory requirements and community covenants.',
-                'links': [
-                    ('Florida HOA Laws', 'http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/'),
-                    ('CAI Florida Resources', 'https://www.caionline.org/StateChapters/Florida/Pages/default.aspx')
-                ]
-            }
-    
-    # General catch-all response for any HOA question
-    return {
-        'type': 'general',
-        'title': f'Florida HOA Information: {query.title()}',
-        'content': f'Florida HOA communities are governed by Chapter 720, Florida Statutes, which provides comprehensive frameworks for community governance. For specific questions about "{query}", consult your community\'s governing documents alongside applicable Florida statutes.',
-        'statute': '720 (Florida HOA Act)',
-        'examples': ['Review community covenants and bylaws', 'Consult Florida Statute Chapter 720', 'Contact your HOA board or management', 'Seek legal advice for complex issues'],
-        'boca_example': f'Boca Ridge Glen, like all Florida HOAs, must comply with state law requirements while implementing community-specific rules through properly adopted covenants and bylaws.',
-        'links': [
-            ('Florida Statute 720', 'http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/'),
-            ('Florida HOA Resources', 'https://www.caionline.org/StateChapters/Florida/Pages/default.aspx'),
-            ('Legal Information', 'https://www.floridabar.org/')
-        ]
-    }
-
-# Enhanced Florida search function with dynamic responses
+# Enhanced Florida search function with Boca Ridge examples
 def search_florida_hoa_rules(search_query):
     if not search_query:
         return []
@@ -343,7 +210,6 @@ def search_florida_hoa_rules(search_query):
     search_terms = search_query.lower().strip()
     query_words = re.findall(r'\b\w+\b', search_terms)
     
-    # First, search existing rule database
     for rule_id, rule_data in florida_hoa_rules.items():
         score = 0
         rule_content = rule_data["content"]
@@ -358,25 +224,6 @@ def search_florida_hoa_rules(search_query):
         # Boost for Florida statute references
         if 'florida statute' in rule_lower or 'florida law' in rule_lower:
             score += 20
-        
-        # Special boost for water conservation queries
-        if ('water' in search_terms and 'conservation' in search_terms) and ('water' in rule_lower and 'conservation' in rule_lower):
-            score += 80
-        if 'water conservation' in search_terms and 'water conservation' in rule_lower:
-            score += 100
-            
-        # Special boost for contract/bidding queries - very restrictive
-        contract_query = 'bid' in search_terms or 'contract' in search_terms or 'vendor' in search_terms
-        contract_content = 'contract' in rule_lower or 'bid' in rule_lower or 'vendor' in rule_lower or 'procurement' in rule_lower
-        
-        if contract_query and contract_content:
-            score += 150
-        elif contract_query and not contract_content:
-            # Penalize non-contract content when contract query is made
-            score = max(0, score - 50)
-            
-        if 'how many bids' in search_terms and ('bid' in rule_lower or 'contract' in rule_lower):
-            score += 200
         
         # Exact phrase matching (highest score)
         if search_terms in rule_lower or search_terms in rule_name_lower:
@@ -404,7 +251,7 @@ def search_florida_hoa_rules(search_query):
         if word_matches > 1:
             score += word_matches * 12
         
-        # Enhanced synonym matching for water conservation and other topics
+        # Enhanced synonym matching
         florida_synonyms = {
             'pet': ['dog', 'cat', 'animal', 'leash', 'weight'],
             'architectural': ['building', 'modification', 'approval', 'construction'],
@@ -412,28 +259,14 @@ def search_florida_hoa_rules(search_query):
             'fine': ['violation', 'penalty', 'hearing', 'appeal'],
             'maintenance': ['repair', 'exterior', 'painting', 'landscaping'],
             'vehicle': ['truck', 'commercial', 'boat', 'trailer', 'parking'],
-            'water': ['irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'landscape'],
-            'conservation': ['water', 'irrigation', 'drought', 'watering', 'landscape', 'friendly'],
-            'requirements': ['rules', 'restrictions', 'regulations', 'guidelines', 'policies'],
-            'board': ['director', 'governance', 'meeting', 'quorum', 'voting', 'election'],
-            'quorum': ['majority', 'board', 'members', 'required', 'meeting', 'voting'],
-            'meeting': ['board', 'notice', 'quorum', 'voting', 'governance', 'sunshine'],
-            'contract': ['bid', 'vendor', 'procurement', 'competitive', 'proposal'],
-            'bid': ['contract', 'vendor', 'competitive', 'proposal', 'three', 'multiple'],
-            'vendor': ['contractor', 'service', 'selection', 'bid', 'proposal'],
             'boca': ['ridge', 'glen', 'community', 'example']
         }
         
-        # Enhanced matching for both directions
         for main_word, related_words in florida_synonyms.items():
             if main_word in query_words:
                 for related in related_words:
                     if related in rule_lower or related in rule_name_lower:
                         score += 22
-            # Also check if any related words are in query and main word in content
-            for related in related_words:
-                if related in query_words and main_word in rule_lower:
-                    score += 22
         
         # Add result if matches found
         if score > 0:
@@ -442,38 +275,12 @@ def search_florida_hoa_rules(search_query):
                 'rule_data': rule_data,
                 'score': score,
                 'title': rule_id.replace('_fl', '').replace('_', ' ').title(),
-                'has_boca_example': bool(rule_data.get("boca_ridge_example")),
-                'type': 'existing'
+                'has_boca_example': bool(rule_data.get("boca_ridge_example"))
             })
     
-    # Filter out low-relevance results (score < 50) for better precision
-    high_relevance_results = [r for r in results if r['score'] >= 50]
-    
-    # If we have good matches, use only those; otherwise keep all results
-    if high_relevance_results:
-        results = high_relevance_results
-    
-    # If no good matches found (highest score < 30), add dynamic response
-    if not results or (results and max(r['score'] for r in results) < 30):
-        dynamic_response = generate_dynamic_response(search_query)
-        results.append({
-            'rule_id': f'dynamic_{hash(search_query) % 1000}',
-            'rule_data': {
-                'content': dynamic_response['content'],
-                'boca_ridge_example': dynamic_response['boca_example'],
-                'statute': dynamic_response['statute'],
-                'links': dynamic_response['links']
-            },
-            'score': 50,  # Medium relevance for dynamic responses
-            'title': dynamic_response['title'],
-            'has_boca_example': True,
-            'type': 'dynamic',
-            'examples': dynamic_response.get('examples', [])
-        })
-    
-    # Sort by score (highest first) and limit to top 3 most relevant
+    # Sort by score (highest first)
     results.sort(key=lambda x: x['score'], reverse=True)
-    return results[:3]  # Only return top 3 most relevant results
+    return results
 
 # Florida-specific topic buttons with Boca Ridge examples
 st.markdown("### 🎯 Florida HOA Law Topics:")
@@ -507,91 +314,12 @@ with col8:
     if st.button("📜 FL Statute 720"):
         query = "florida statute 720 requirements"
 
-# Dynamic topic buttons
-st.markdown("### 🤖 Dynamic Search Topics:")
-col9, col10, col11, col12 = st.columns(4)
-
-with col9:
-    if st.button("🔇 Noise Restrictions"):
-        query = "noise restrictions quiet hours"
-with col10:
-    if st.button("☀️ Solar Panel Rights"):
-        query = "solar panel installation rights"
-with col11:
-    if st.button("🏃 HOA Elections"):
-        query = "board elections voting procedures"
-with col12:
-    if st.button("🛡️ Security & Access"):
-        query = "security services gated community"
-
-col13, col14, col15, col16 = st.columns(4)
-
-with col13:
-    if st.button("🇺🇸 Flag Display"):
-        query = "flag display rights American flag"
-with col14:
-    if st.button("📦 Storage Rules"):
-        query = "outdoor storage shed installation"
-with col15:
-    if st.button("🏥 Insurance Requirements"):
-        query = "insurance coverage hurricane requirements"
-with col16:
-    if st.button("💰 Budget & Finances"):
-        query = "HOA budget financial reports"
-
-# Board governance buttons
-st.markdown("### 🏛️ Board Governance:")
-col17, col18, col19, col20 = st.columns(4)
-
-with col17:
-    if st.button("👥 Board Quorum"):
-        query = "board quorum requirements members"
-with col18:
-    if st.button("🗳️ Board Elections"):
-        query = "board elections voting procedures"
-with col19:
-    if st.button("📋 Board Meetings"):
-        query = "board meetings notice requirements"
-with col20:
-    if st.button("⚖️ Board Powers"):
-        query = "board authority powers duties"
-
 # Display enhanced search results with Boca Ridge examples
 if query:
     results = search_florida_hoa_rules(query)
     
     if results:
         st.markdown(f"### 📋 Found {len(results)} Florida HOA Results for: '{query}'")
-        
-        # Debug info (remove after testing)
-        if st.checkbox("🔍 Show Debug Scoring", key="debug_mode"):
-            st.markdown("**Debug: Top 10 Raw Scores Before Filtering**")
-            # Get all results before filtering for debug
-            debug_results = []
-            for rule_id, rule_data in florida_hoa_rules.items():
-                score = 0
-                rule_content = rule_data["content"]
-                boca_example = rule_data.get("boca_ridge_example", "")
-                rule_lower = (rule_content + " " + boca_example).lower()
-                
-                # Test contract penalty
-                contract_query = 'bid' in query.lower() or 'contract' in query.lower() or 'vendor' in query.lower()
-                contract_content = 'contract' in rule_lower or 'bid' in rule_lower or 'vendor' in rule_lower or 'procurement' in rule_lower
-                
-                if contract_query and contract_content:
-                    score += 150
-                elif contract_query and not contract_content:
-                    score = max(0, score - 50)
-                    
-                debug_results.append({
-                    'name': rule_id.replace('_fl', '').replace('_', ' ').title(),
-                    'score': score,
-                    'has_contract_content': contract_content
-                })
-            
-            debug_results.sort(key=lambda x: x['score'], reverse=True)
-            for i, result in enumerate(debug_results[:10], 1):
-                st.caption(f"{i}. {result['name']}: {result['score']} points (Contract Content: {result['has_contract_content']})")
         
         for i, result in enumerate(results[:6], 1):
             rule_data = result['rule_data']
@@ -607,53 +335,37 @@ if query:
                 relevance = "💡 Related"
                 color = "#f8f9fa"
             
-            # Special indicators for dynamic responses
-            dynamic_indicator = ""
-            if result.get('type') == 'dynamic':
-                dynamic_indicator = " 🤖"
-                relevance += " (AI Generated)"
-            
+            # Special indicators
             boca_indicator = " 🏘️" if result['has_boca_example'] else ""
             
-            # Display using native Streamlit components for better compatibility
+            # Create links section
+            links_html = ""
+            for link_text, link_url in rule_data['links']:
+                links_html += f'<a href="{link_url}" target="_blank" style="margin-right: 15px; color: #007bff; text-decoration: none;">🔗 {link_text}</a>'
             
-            # Header with relevance indicator
-            header_text = f"📄 {result['title']}"
+            # Boca Ridge example section
+            boca_section = ""
             if result['has_boca_example']:
-                header_text += " 🏘️"
-            if result.get('type') == 'dynamic':
-                header_text += " 🤖"
-                relevance += " (AI Generated)"
-            header_text += f" ({relevance})"
+                boca_section = f"""
+                <div style="border-top: 1px solid #28a745; padding-top: 0.8rem; margin-top: 0.8rem; background: #f8fff8; padding: 0.8rem; border-radius: 6px;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #28a745;">🏘️ Boca Ridge Glen Example:</p>
+                    <p style="margin: 0; font-size: 0.95em; line-height: 1.6; color: #155724; font-style: italic;">{rule_data['boca_ridge_example']}</p>
+                </div>
+                """
             
-            with st.container():
-                st.markdown(f"### {header_text}")
-                
-                # Add relevance score thermometer
-                score_percentage = min(result['score'] / 200.0, 1.0)  # Scale to max 200 points
-                st.progress(score_percentage)
-                st.caption(f"🌡️ Relevance Score: {result['score']} points")
-                
-                st.markdown(f"**Florida Law:** {rule_data['content']}")
-                
-                # Examples section for dynamic responses
-                if result.get('type') == 'dynamic' and result.get('examples'):
-                    st.markdown("**💡 Common Examples:**")
-                    for example in result['examples']:
-                        st.markdown(f"• {example}")
-                
-                # Boca Ridge example section
-                if result['has_boca_example']:
-                    st.success(f"🏘️ **Boca Ridge Glen Example:** {rule_data['boca_ridge_example']}")
-                
-                # Links section using native Streamlit columns
-                st.markdown("**📚 Additional Resources:**")
-                link_cols = st.columns(len(rule_data['links']))
-                for idx, (link_text, link_url) in enumerate(rule_data['links']):
-                    with link_cols[idx % len(link_cols)]:
-                        st.markdown(f"🔗 [{link_text}]({link_url})")
-                
-                st.markdown("---")
+            st.markdown(f"""
+            <div style="border: 1px solid #ddd; padding: 1.3rem; margin: 0.8rem 0; border-radius: 12px; background: {color}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+                <h4 style="margin: 0 0 0.8rem 0; color: #2c3e50;">📄 {result['title']}{boca_indicator} <small style="color: #666; font-weight: normal;">({relevance})</small></h4>
+                <p style="font-size: 1.05em; line-height: 1.7; margin: 0 0 1rem 0; color: #34495e;"><strong>Florida Law:</strong> {rule_data['content']}</p>
+                {boca_section}
+                <div style="border-top: 1px solid #ddd; padding-top: 0.8rem; margin-top: 0.8rem;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #495057;">📚 Additional Resources:</p>
+                    <div style="font-size: 0.9em; line-height: 1.5;">
+                        {links_html}
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
         if len(results) > 6:
             st.info(f"Showing top 6 of {len(results)} Florida HOA results. Try more specific terms for better matches.")
