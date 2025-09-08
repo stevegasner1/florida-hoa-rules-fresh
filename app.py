@@ -308,6 +308,12 @@ def search_florida_hoa_rules(search_query):
         if 'florida statute' in rule_lower or 'florida law' in rule_lower:
             score += 20
         
+        # Special boost for water conservation queries
+        if ('water' in search_terms and 'conservation' in search_terms) and ('water' in rule_lower and 'conservation' in rule_lower):
+            score += 80
+        if 'water conservation' in search_terms and 'water conservation' in rule_lower:
+            score += 100
+        
         # Exact phrase matching (highest score)
         if search_terms in rule_lower or search_terms in rule_name_lower:
             score += 100
@@ -334,7 +340,7 @@ def search_florida_hoa_rules(search_query):
         if word_matches > 1:
             score += word_matches * 12
         
-        # Enhanced synonym matching for water conservation
+        # Enhanced synonym matching for water conservation and other topics
         florida_synonyms = {
             'pet': ['dog', 'cat', 'animal', 'leash', 'weight'],
             'architectural': ['building', 'modification', 'approval', 'construction'],
@@ -343,14 +349,21 @@ def search_florida_hoa_rules(search_query):
             'maintenance': ['repair', 'exterior', 'painting', 'landscaping'],
             'vehicle': ['truck', 'commercial', 'boat', 'trailer', 'parking'],
             'water': ['irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'landscape'],
+            'conservation': ['water', 'irrigation', 'drought', 'watering', 'landscape', 'friendly'],
+            'requirements': ['rules', 'restrictions', 'regulations', 'guidelines', 'policies'],
             'boca': ['ridge', 'glen', 'community', 'example']
         }
         
+        # Enhanced matching for both directions
         for main_word, related_words in florida_synonyms.items():
             if main_word in query_words:
                 for related in related_words:
                     if related in rule_lower or related in rule_name_lower:
                         score += 22
+            # Also check if any related words are in query and main word in content
+            for related in related_words:
+                if related in query_words and main_word in rule_lower:
+                    score += 22
         
         # Add result if matches found
         if score > 0:
