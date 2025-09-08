@@ -364,6 +364,12 @@ def search_florida_hoa_rules(search_query):
             score += 80
         if 'water conservation' in search_terms and 'water conservation' in rule_lower:
             score += 100
+            
+        # Special boost for contract/bidding queries  
+        if ('bid' in search_terms or 'contract' in search_terms or 'vendor' in search_terms) and ('contract' in rule_lower or 'bid' in rule_lower or 'vendor' in rule_lower):
+            score += 100
+        if 'how many bids' in search_terms and ('bid' in rule_lower or 'contract' in rule_lower):
+            score += 120
         
         # Exact phrase matching (highest score)
         if search_terms in rule_lower or search_terms in rule_name_lower:
@@ -433,6 +439,13 @@ def search_florida_hoa_rules(search_query):
                 'type': 'existing'
             })
     
+    # Filter out low-relevance results (score < 25) unless no good matches found
+    high_relevance_results = [r for r in results if r['score'] >= 25]
+    
+    # If we have good matches, use only those; otherwise keep all results
+    if high_relevance_results:
+        results = high_relevance_results
+    
     # If no good matches found (highest score < 30), add dynamic response
     if not results or (results and max(r['score'] for r in results) < 30):
         dynamic_response = generate_dynamic_response(search_query)
@@ -451,9 +464,9 @@ def search_florida_hoa_rules(search_query):
             'examples': dynamic_response.get('examples', [])
         })
     
-    # Sort by score (highest first)
+    # Sort by score (highest first) and limit to top 3 most relevant
     results.sort(key=lambda x: x['score'], reverse=True)
-    return results
+    return results[:3]  # Only return top 3 most relevant results
 
 # Florida-specific topic buttons with Boca Ridge examples
 st.markdown("### 🎯 Florida HOA Law Topics:")
