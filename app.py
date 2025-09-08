@@ -86,6 +86,60 @@ florida_hoa_rules = {
         ]
     },
     
+    # Water Conservation Requirements - Florida and Boca Ridge Glen
+    "water_conservation_fl": {
+        "content": "Florida communities must comply with water management district regulations and may implement additional conservation measures during drought conditions. Florida Statute 373 governs water use and conservation throughout the state.",
+        "boca_ridge_example": "Boca Ridge Glen Water Conservation: Irrigation systems must comply with South Florida Water Management District regulations. Watering restricted to designated days and times. Drought-tolerant landscaping encouraged. Pool covers required to reduce evaporation.",
+        "statute": "373 (Water Resources)",
+        "links": [
+            ("Florida Water Management", "https://www.sfwmd.gov/"),
+            ("Water Conservation Guidelines", "https://floridadep.gov/water"),
+            ("SFWMD Regulations", "https://www.sfwmd.gov/doing-business-with-us/permits/irrigation")
+        ]
+    },
+    
+    "irrigation_restrictions_fl": {
+        "content": "South Florida Water Management District requires year-round irrigation restrictions: residential properties may water on assigned days only, typically twice per week, between 4am-10am or 4pm-8pm.",
+        "boca_ridge_example": "Boca Ridge Glen follows SFWMD irrigation schedule: Even-numbered addresses water Wednesday/Saturday, odd-numbered addresses water Thursday/Sunday. No watering 10am-4pm. Hand watering and micro-irrigation allowed anytime.",
+        "statute": "SFWMD Rules",
+        "links": [
+            ("SFWMD Watering Rules", "https://www.sfwmd.gov/living-in-south-florida/water-restrictions"),
+            ("Year-Round Restrictions", "https://www.sfwmd.gov/sites/default/files/documents/wsd_year_round_landscape_irrigation_rule.pdf")
+        ]
+    },
+    
+    "drought_emergency_procedures_fl": {
+        "content": "During declared water emergencies, Florida communities must implement additional restrictions including prohibition of non-essential water uses such as car washing, fountain operation, and landscape irrigation.",
+        "boca_ridge_example": "Boca Ridge Glen Emergency Water Plan: During Phase I restrictions, irrigation reduced to once per week. Phase II eliminates all irrigation except hand watering. Violations subject to fines and water service suspension.",
+        "statute": "Emergency Management",
+        "links": [
+            ("Florida Drought Response", "https://floridadisaster.org/dem/mitigation/drought/"),
+            ("Water Emergency Plans", "https://www.sfwmd.gov/")
+        ]
+    },
+    
+    "florida_friendly_landscaping_fl": {
+        "content": "Florida Statute 720.3075 and 373.185 require HOAs to allow Florida-friendly landscaping that conserves water and protects the environment. HOAs cannot enforce rules prohibiting sustainable landscaping practices including drought-tolerant plants, efficient irrigation, and native species.",
+        "boca_ridge_example": "Boca Ridge Glen must permit Florida-friendly landscaping modifications under state law, including replacement of high-water-use grass with drought-tolerant alternatives, installation of rain gardens, and use of native plant species approved by University of Florida guidelines.",
+        "statute": "720.3075, 373.185",
+        "links": [
+            ("Florida Statute 720.3075", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.3075.html"),
+            ("Florida Statute 373.185", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0300-0399/0373/Sections/0373.185.html"),
+            ("Florida-Friendly Landscaping", "https://ffl.ifas.ufl.edu/"),
+            ("UF Plant Database", "https://gardeningsolutions.ifas.ufl.edu/plants/")
+        ]
+    },
+    
+    "rain_water_collection_fl": {
+        "content": "Florida Statute 373.036 permits residential rainwater collection for landscape irrigation and other non-potable uses. HOAs cannot prohibit rain barrels or cisterns used for water conservation.",
+        "boca_ridge_example": "Boca Ridge Glen residents may install rain collection systems under Florida law for irrigation purposes, subject to reasonable aesthetic guidelines from the Architectural Control Board.",
+        "statute": "373.036",
+        "links": [
+            ("Florida Statute 373.036", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0300-0399/0373/Sections/0373.036.html"),
+            ("Rainwater Harvesting Guide", "https://edis.ifas.ufl.edu/")
+        ]
+    },
+    
     # Vehicle and Parking Restrictions - Boca Ridge Glen
     "vehicle_restrictions_fl": {
         "content": "Florida HOAs commonly restrict commercial vehicles, RVs, and boats to maintain residential character and property values.",
