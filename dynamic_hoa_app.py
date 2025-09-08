@@ -365,11 +365,18 @@ def search_florida_hoa_rules(search_query):
         if 'water conservation' in search_terms and 'water conservation' in rule_lower:
             score += 100
             
-        # Special boost for contract/bidding queries  
-        if ('bid' in search_terms or 'contract' in search_terms or 'vendor' in search_terms) and ('contract' in rule_lower or 'bid' in rule_lower or 'vendor' in rule_lower):
-            score += 100
+        # Special boost for contract/bidding queries - very restrictive
+        contract_query = 'bid' in search_terms or 'contract' in search_terms or 'vendor' in search_terms
+        contract_content = 'contract' in rule_lower or 'bid' in rule_lower or 'vendor' in rule_lower or 'procurement' in rule_lower
+        
+        if contract_query and contract_content:
+            score += 150
+        elif contract_query and not contract_content:
+            # Penalize non-contract content when contract query is made
+            score = max(0, score - 50)
+            
         if 'how many bids' in search_terms and ('bid' in rule_lower or 'contract' in rule_lower):
-            score += 120
+            score += 200
         
         # Exact phrase matching (highest score)
         if search_terms in rule_lower or search_terms in rule_name_lower:
@@ -439,8 +446,8 @@ def search_florida_hoa_rules(search_query):
                 'type': 'existing'
             })
     
-    # Filter out low-relevance results (score < 25) unless no good matches found
-    high_relevance_results = [r for r in results if r['score'] >= 25]
+    # Filter out low-relevance results (score < 50) for better precision
+    high_relevance_results = [r for r in results if r['score'] >= 50]
     
     # If we have good matches, use only those; otherwise keep all results
     if high_relevance_results:
@@ -590,11 +597,12 @@ if query:
             header_text += f" ({relevance})"
             
             with st.container():
-                # Add relevance score thermometer
-                score_percentage = min(result['score'], 100)
                 st.markdown(f"### {header_text}")
-                st.progress(score_percentage / 100.0)
-                st.caption(f"Relevance Score: {result['score']}/100")
+                
+                # Add relevance score thermometer
+                score_percentage = min(result['score'] / 200.0, 1.0)  # Scale to max 200 points
+                st.progress(score_percentage)
+                st.caption(f"🌡️ Relevance Score: {result['score']} points")
                 
                 st.markdown(f"**Florida Law:** {rule_data['content']}")
                 
