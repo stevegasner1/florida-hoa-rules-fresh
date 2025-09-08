@@ -491,50 +491,39 @@ if query:
             
             boca_indicator = " 🏘️" if result['has_boca_example'] else ""
             
-            # Create links section
-            links_html = ""
-            for link_text, link_url in rule_data['links']:
-                links_html += f'<a href="{link_url}" target="_blank" style="margin-right: 15px; color: #007bff; text-decoration: none;">🔗 {link_text}</a>'
+            # Display using native Streamlit components for better compatibility
             
-            # Examples section for dynamic responses
-            examples_section = ""
-            if result.get('type') == 'dynamic' and result.get('examples'):
-                examples_html = ""
-                for example in result['examples']:
-                    examples_html += f'<li style="margin: 0.3rem 0; color: #495057;">{example}</li>'
-                examples_section = f"""
-                <div style="border-top: 1px solid #6c757d; padding-top: 0.8rem; margin-top: 0.8rem; background: #f8f9fa; padding: 0.8rem; border-radius: 6px;">
-                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #6c757d;">💡 Common Examples:</p>
-                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.95em; line-height: 1.5;">
-                        {examples_html}
-                    </ul>
-                </div>
-                """
-            
-            # Boca Ridge example section
-            boca_section = ""
+            # Header with relevance indicator
+            header_text = f"📄 {result['title']}"
             if result['has_boca_example']:
-                boca_section = f"""
-                <div style="border-top: 1px solid #28a745; padding-top: 0.8rem; margin-top: 0.8rem; background: #f8fff8; padding: 0.8rem; border-radius: 6px;">
-                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #28a745;">🏘️ Boca Ridge Glen Example:</p>
-                    <p style="margin: 0; font-size: 0.95em; line-height: 1.6; color: #155724; font-style: italic;">{rule_data['boca_ridge_example']}</p>
-                </div>
-                """
+                header_text += " 🏘️"
+            if result.get('type') == 'dynamic':
+                header_text += " 🤖"
+                relevance += " (AI Generated)"
+            header_text += f" ({relevance})"
             
-            st.markdown(f"""
-            <div style="border: 1px solid #ddd; padding: 1.3rem; margin: 0.8rem 0; border-radius: 12px; background: {color}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
-                <h4 style="margin: 0 0 0.8rem 0; color: #2c3e50;">📄 {result['title']}{boca_indicator}{dynamic_indicator} <small style="color: #666; font-weight: normal;">({relevance})</small></h4>
-                <p style="font-size: 1.05em; line-height: 1.7; margin: 0 0 1rem 0; color: #34495e;"><strong>Florida Law:</strong> {rule_data['content']}</p>
-                {examples_section}
-                {boca_section}
-                <div style="border-top: 1px solid #ddd; padding-top: 0.8rem; margin-top: 0.8rem;">
-                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #495057;">📚 Additional Resources:</p>
-                    <div style="font-size: 0.9em; line-height: 1.5;">
-                        {links_html}
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            with st.container():
+                st.markdown(f"### {header_text}")
+                st.markdown(f"**Florida Law:** {rule_data['content']}")
+                
+                # Examples section for dynamic responses
+                if result.get('type') == 'dynamic' and result.get('examples'):
+                    st.markdown("**💡 Common Examples:**")
+                    for example in result['examples']:
+                        st.markdown(f"• {example}")
+                
+                # Boca Ridge example section
+                if result['has_boca_example']:
+                    st.success(f"🏘️ **Boca Ridge Glen Example:** {rule_data['boca_ridge_example']}")
+                
+                # Links section using native Streamlit columns
+                st.markdown("**📚 Additional Resources:**")
+                link_cols = st.columns(len(rule_data['links']))
+                for idx, (link_text, link_url) in enumerate(rule_data['links']):
+                    with link_cols[idx % len(link_cols)]:
+                        st.markdown(f"🔗 [{link_text}]({link_url})")
+                
+                st.markdown("---")
             
         if len(results) > 6:
             st.info(f"Showing top 6 of {len(results)} Florida HOA results. Try more specific terms for better matches.")
