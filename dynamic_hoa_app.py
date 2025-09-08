@@ -563,6 +563,36 @@ if query:
     if results:
         st.markdown(f"### 📋 Found {len(results)} Florida HOA Results for: '{query}'")
         
+        # Debug info (remove after testing)
+        if st.checkbox("🔍 Show Debug Scoring", key="debug_mode"):
+            st.markdown("**Debug: Top 10 Raw Scores Before Filtering**")
+            # Get all results before filtering for debug
+            debug_results = []
+            for rule_id, rule_data in florida_hoa_rules.items():
+                score = 0
+                rule_content = rule_data["content"]
+                boca_example = rule_data.get("boca_ridge_example", "")
+                rule_lower = (rule_content + " " + boca_example).lower()
+                
+                # Test contract penalty
+                contract_query = 'bid' in query.lower() or 'contract' in query.lower() or 'vendor' in query.lower()
+                contract_content = 'contract' in rule_lower or 'bid' in rule_lower or 'vendor' in rule_lower or 'procurement' in rule_lower
+                
+                if contract_query and contract_content:
+                    score += 150
+                elif contract_query and not contract_content:
+                    score = max(0, score - 50)
+                    
+                debug_results.append({
+                    'name': rule_id.replace('_fl', '').replace('_', ' ').title(),
+                    'score': score,
+                    'has_contract_content': contract_content
+                })
+            
+            debug_results.sort(key=lambda x: x['score'], reverse=True)
+            for i, result in enumerate(debug_results[:10], 1):
+                st.caption(f"{i}. {result['name']}: {result['score']} points (Contract Content: {result['has_contract_content']})")
+        
         for i, result in enumerate(results[:6], 1):
             rule_data = result['rule_data']
             
