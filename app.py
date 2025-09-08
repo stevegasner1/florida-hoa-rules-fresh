@@ -196,12 +196,94 @@ florida_hoa_rules = {
 }
 
 st.markdown("## 🔍 Search Florida HOA Laws and Community Rules")
+st.info("🤖 **NEW**: Dynamic search now handles ANY HOA question - ask about noise rules, solar panels, flags, elections, or any other topic!")
 query = st.text_input(
     "Ask any question about Florida HOA laws and community rules:",
-    placeholder="e.g., Boca Ridge Glen pet policies, architectural review, assessment collection"
+    placeholder="e.g., noise restrictions, solar panel installation, flag display rights, HOA elections"
 )
 
-# Enhanced Florida search function with Boca Ridge examples
+# Dynamic response generator for open-ended queries
+def generate_dynamic_response(query):
+    """Generate dynamic HOA responses for queries not covered by existing rules"""
+    
+    # Common HOA topics and their Florida law context
+    hoa_knowledge_base = {
+        'noise': {
+            'statutes': ['720.305 (Violation Procedures)'],
+            'content': 'Florida HOAs can establish reasonable noise restrictions to maintain peaceful enjoyment of properties. Enforcement follows FL Statute 720.305 violation procedures.',
+            'examples': ['Quiet hours (typically 10 PM - 7 AM)', 'Construction noise limits', 'Party/gathering restrictions', 'HVAC equipment placement rules']
+        },
+        'solar': {
+            'statutes': ['163.04 (Solar Rights)', '720.3075 (Property Rights)'],
+            'content': 'Florida Statute 163.04 protects homeowner rights to install solar collectors. HOAs cannot prohibit solar installations but may impose reasonable aesthetic restrictions.',
+            'examples': ['Solar panel placement guidelines', 'Roof installation approval process', 'Aesthetic screening requirements', 'Energy efficiency improvements']
+        },
+        'flag': {
+            'statutes': ['720.3075 (Display Rights)'],
+            'content': 'Florida law protects the right to display the US flag, Florida state flag, and military service flags. HOAs may establish reasonable size and placement restrictions.',
+            'examples': ['American flag display rights', 'Military service flag protection', 'Holiday decoration guidelines', 'Political sign restrictions']
+        },
+        'storage': {
+            'statutes': ['720 (General Covenants)'],
+            'content': 'Florida HOAs commonly restrict outdoor storage to maintain community appearance and property values through architectural guidelines.',
+            'examples': ['Garage storage requirements', 'Shed installation approval', 'Pool equipment screening', 'Trash container placement']
+        },
+        'security': {
+            'statutes': ['720.301 (Common Areas)', '768.28 (Liability)'],
+            'content': 'Florida HOAs may provide security services and establish access control measures for common areas while managing liability considerations.',
+            'examples': ['Gated community access', 'Security patrol services', 'Camera surveillance systems', 'Guest registration procedures']
+        },
+        'insurance': {
+            'statutes': ['720.3085 (Financial Management)'],
+            'content': 'Florida law requires HOAs to maintain appropriate insurance coverage and may require individual owners to carry specific insurance types.',
+            'examples': ['Hurricane/windstorm coverage', 'Flood insurance requirements', 'Liability insurance minimums', 'Building coverage responsibilities']
+        },
+        'election': {
+            'statutes': ['720.306 (Board Elections)'],
+            'content': 'Florida Statute 720.306 governs HOA board elections including candidate eligibility, voting procedures, and term limits.',
+            'examples': ['Annual election requirements', 'Candidate qualification rules', 'Voting method procedures', 'Term limit restrictions']
+        },
+        'budget': {
+            'statutes': ['720.308 (Budgets and Financial Reports)'],
+            'content': 'Florida law requires HOAs to prepare annual budgets, provide financial reports to owners, and follow specific assessment procedures.',
+            'examples': ['Annual budget adoption', 'Financial statement distribution', 'Assessment increase limitations', 'Reserve fund requirements']
+        }
+    }
+    
+    query_lower = query.lower()
+    
+    # Find matching topics
+    for topic, info in hoa_knowledge_base.items():
+        if topic in query_lower or any(keyword in query_lower for keyword in [topic + 's', topic + 'ing']):
+            return {
+                'type': 'dynamic',
+                'title': f'Florida HOA {topic.title()} Requirements',
+                'content': info['content'],
+                'statute': ', '.join(info['statutes']),
+                'examples': info['examples'],
+                'boca_example': f'Boca Ridge Glen would handle {topic} matters according to Florida statutory requirements and community covenants.',
+                'links': [
+                    ('Florida HOA Laws', 'http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/'),
+                    ('CAI Florida Resources', 'https://www.caionline.org/StateChapters/Florida/Pages/default.aspx')
+                ]
+            }
+    
+    # General catch-all response for any HOA question
+    return {
+        'type': 'general',
+        'title': f'Florida HOA Information: {query.title()}',
+        'content': f'Florida HOA communities are governed by Chapter 720, Florida Statutes, which provides comprehensive frameworks for community governance. For specific questions about "{query}", consult your community\'s governing documents alongside applicable Florida statutes.',
+        'statute': '720 (Florida HOA Act)',
+        'examples': ['Review community covenants and bylaws', 'Consult Florida Statute Chapter 720', 'Contact your HOA board or management', 'Seek legal advice for complex issues'],
+        'boca_example': f'Boca Ridge Glen, like all Florida HOAs, must comply with state law requirements while implementing community-specific rules through properly adopted covenants and bylaws.',
+        'links': [
+            ('Florida Statute 720', 'http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/'),
+            ('Florida HOA Resources', 'https://www.caionline.org/StateChapters/Florida/Pages/default.aspx'),
+            ('Legal Information', 'https://www.floridabar.org/')
+        ]
+    }
+
+# Enhanced Florida search function with dynamic responses
 def search_florida_hoa_rules(search_query):
     if not search_query:
         return []
@@ -210,6 +292,7 @@ def search_florida_hoa_rules(search_query):
     search_terms = search_query.lower().strip()
     query_words = re.findall(r'\b\w+\b', search_terms)
     
+    # First, search existing rule database
     for rule_id, rule_data in florida_hoa_rules.items():
         score = 0
         rule_content = rule_data["content"]
@@ -251,7 +334,7 @@ def search_florida_hoa_rules(search_query):
         if word_matches > 1:
             score += word_matches * 12
         
-        # Enhanced synonym matching
+        # Enhanced synonym matching for water conservation
         florida_synonyms = {
             'pet': ['dog', 'cat', 'animal', 'leash', 'weight'],
             'architectural': ['building', 'modification', 'approval', 'construction'],
@@ -259,6 +342,7 @@ def search_florida_hoa_rules(search_query):
             'fine': ['violation', 'penalty', 'hearing', 'appeal'],
             'maintenance': ['repair', 'exterior', 'painting', 'landscaping'],
             'vehicle': ['truck', 'commercial', 'boat', 'trailer', 'parking'],
+            'water': ['irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'landscape'],
             'boca': ['ridge', 'glen', 'community', 'example']
         }
         
@@ -275,8 +359,27 @@ def search_florida_hoa_rules(search_query):
                 'rule_data': rule_data,
                 'score': score,
                 'title': rule_id.replace('_fl', '').replace('_', ' ').title(),
-                'has_boca_example': bool(rule_data.get("boca_ridge_example"))
+                'has_boca_example': bool(rule_data.get("boca_ridge_example")),
+                'type': 'existing'
             })
+    
+    # If no good matches found (highest score < 30), add dynamic response
+    if not results or (results and max(r['score'] for r in results) < 30):
+        dynamic_response = generate_dynamic_response(search_query)
+        results.append({
+            'rule_id': f'dynamic_{hash(search_query) % 1000}',
+            'rule_data': {
+                'content': dynamic_response['content'],
+                'boca_ridge_example': dynamic_response['boca_example'],
+                'statute': dynamic_response['statute'],
+                'links': dynamic_response['links']
+            },
+            'score': 50,  # Medium relevance for dynamic responses
+            'title': dynamic_response['title'],
+            'has_boca_example': True,
+            'type': 'dynamic',
+            'examples': dynamic_response.get('examples', [])
+        })
     
     # Sort by score (highest first)
     results.sort(key=lambda x: x['score'], reverse=True)
@@ -314,6 +417,38 @@ with col8:
     if st.button("📜 FL Statute 720"):
         query = "florida statute 720 requirements"
 
+# Dynamic topic buttons
+st.markdown("### 🤖 Dynamic Search Topics:")
+col9, col10, col11, col12 = st.columns(4)
+
+with col9:
+    if st.button("🔇 Noise Restrictions"):
+        query = "noise restrictions quiet hours"
+with col10:
+    if st.button("☀️ Solar Panel Rights"):
+        query = "solar panel installation rights"
+with col11:
+    if st.button("🏃 HOA Elections"):
+        query = "board elections voting procedures"
+with col12:
+    if st.button("🛡️ Security & Access"):
+        query = "security services gated community"
+
+col13, col14, col15, col16 = st.columns(4)
+
+with col13:
+    if st.button("🇺🇸 Flag Display"):
+        query = "flag display rights American flag"
+with col14:
+    if st.button("📦 Storage Rules"):
+        query = "outdoor storage shed installation"
+with col15:
+    if st.button("🏥 Insurance Requirements"):
+        query = "insurance coverage hurricane requirements"
+with col16:
+    if st.button("💰 Budget & Finances"):
+        query = "HOA budget financial reports"
+
 # Display enhanced search results with Boca Ridge examples
 if query:
     results = search_florida_hoa_rules(query)
@@ -335,13 +470,33 @@ if query:
                 relevance = "💡 Related"
                 color = "#f8f9fa"
             
-            # Special indicators
+            # Special indicators for dynamic responses
+            dynamic_indicator = ""
+            if result.get('type') == 'dynamic':
+                dynamic_indicator = " 🤖"
+                relevance += " (AI Generated)"
+            
             boca_indicator = " 🏘️" if result['has_boca_example'] else ""
             
             # Create links section
             links_html = ""
             for link_text, link_url in rule_data['links']:
                 links_html += f'<a href="{link_url}" target="_blank" style="margin-right: 15px; color: #007bff; text-decoration: none;">🔗 {link_text}</a>'
+            
+            # Examples section for dynamic responses
+            examples_section = ""
+            if result.get('type') == 'dynamic' and result.get('examples'):
+                examples_html = ""
+                for example in result['examples']:
+                    examples_html += f'<li style="margin: 0.3rem 0; color: #495057;">{example}</li>'
+                examples_section = f"""
+                <div style="border-top: 1px solid #6c757d; padding-top: 0.8rem; margin-top: 0.8rem; background: #f8f9fa; padding: 0.8rem; border-radius: 6px;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #6c757d;">💡 Common Examples:</p>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.95em; line-height: 1.5;">
+                        {examples_html}
+                    </ul>
+                </div>
+                """
             
             # Boca Ridge example section
             boca_section = ""
@@ -355,8 +510,9 @@ if query:
             
             st.markdown(f"""
             <div style="border: 1px solid #ddd; padding: 1.3rem; margin: 0.8rem 0; border-radius: 12px; background: {color}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
-                <h4 style="margin: 0 0 0.8rem 0; color: #2c3e50;">📄 {result['title']}{boca_indicator} <small style="color: #666; font-weight: normal;">({relevance})</small></h4>
+                <h4 style="margin: 0 0 0.8rem 0; color: #2c3e50;">📄 {result['title']}{boca_indicator}{dynamic_indicator} <small style="color: #666; font-weight: normal;">({relevance})</small></h4>
                 <p style="font-size: 1.05em; line-height: 1.7; margin: 0 0 1rem 0; color: #34495e;"><strong>Florida Law:</strong> {rule_data['content']}</p>
+                {examples_section}
                 {boca_section}
                 <div style="border-top: 1px solid #ddd; padding-top: 0.8rem; margin-top: 0.8rem;">
                     <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #495057;">📚 Additional Resources:</p>
