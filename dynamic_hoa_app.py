@@ -212,15 +212,46 @@ florida_hoa_rules = {
             ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
             ("Board Structure Guidelines", "https://www.caionline.org/")
         ]
+    },
+    
+    "contract_bidding_requirements_fl": {
+        "content": "Florida Statute 720.3055 requires HOAs to obtain competitive bids for contracts exceeding certain thresholds. While not mandating a specific number of bids, boards must act in good faith and in the best interests of the association. Many associations require 3 bids for major contracts as a best practice.",
+        "boca_ridge_example": "Boca Ridge Glen follows prudent business practices by obtaining multiple competitive bids for major contracts such as landscaping, maintenance, and capital improvements to ensure cost-effectiveness and quality services.",
+        "statute": "720.3055",
+        "links": [
+            ("Florida Statute 720.3055", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.3055.html"),
+            ("Procurement Best Practices", "https://www.caionline.org/"),
+            ("Competitive Bidding Guide", "https://www.apra-usa.com/")
+        ]
+    },
+    
+    "vendor_selection_fl": {
+        "content": "Florida HOA boards have fiduciary duty to select vendors and contractors in the association's best interest. While no specific bid requirement exists in Florida law, obtaining multiple competitive proposals is considered a best practice for transparency and cost control.",
+        "boca_ridge_example": "Boca Ridge Glen vendor selection process includes evaluation of qualifications, references, insurance coverage, and competitive pricing to ensure quality services at reasonable costs for the community.",
+        "statute": "720.3055 (Fiduciary Duty)",
+        "links": [
+            ("Vendor Management Guide", "https://www.caionline.org/"),
+            ("HOA Best Practices", "https://www.apra-usa.com/")
+        ]
     }
 }
 
 st.markdown("## 🔍 Search Florida HOA Laws and Community Rules")
 st.info("🤖 **NEW**: Dynamic search now handles ANY HOA question - ask about noise rules, solar panels, flags, elections, or any other topic!")
+
+# Initialize session state for query tracking
+if 'previous_query' not in st.session_state:
+    st.session_state.previous_query = ""
+
 query = st.text_input(
     "Ask any question about Florida HOA laws and community rules:",
-    placeholder="e.g., noise restrictions, solar panel installation, flag display rights, HOA elections"
+    placeholder="e.g., noise restrictions, solar panel installation, flag display rights, HOA elections",
+    key="search_input"
 )
+
+# Clear results if query changed
+if query != st.session_state.previous_query:
+    st.session_state.previous_query = query
 
 # Dynamic response generator for open-ended queries
 def generate_dynamic_response(query):
@@ -374,6 +405,9 @@ def search_florida_hoa_rules(search_query):
             'board': ['director', 'governance', 'meeting', 'quorum', 'voting', 'election'],
             'quorum': ['majority', 'board', 'members', 'required', 'meeting', 'voting'],
             'meeting': ['board', 'notice', 'quorum', 'voting', 'governance', 'sunshine'],
+            'contract': ['bid', 'vendor', 'procurement', 'competitive', 'proposal'],
+            'bid': ['contract', 'vendor', 'competitive', 'proposal', 'three', 'multiple'],
+            'vendor': ['contractor', 'service', 'selection', 'bid', 'proposal'],
             'boca': ['ridge', 'glen', 'community', 'example']
         }
         
@@ -543,7 +577,12 @@ if query:
             header_text += f" ({relevance})"
             
             with st.container():
+                # Add relevance score thermometer
+                score_percentage = min(result['score'], 100)
                 st.markdown(f"### {header_text}")
+                st.progress(score_percentage / 100.0)
+                st.caption(f"Relevance Score: {result['score']}/100")
+                
                 st.markdown(f"**Florida Law:** {rule_data['content']}")
                 
                 # Examples section for dynamic responses
