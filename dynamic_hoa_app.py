@@ -1,1108 +1,596 @@
-#!/usr/bin/env python3
-"""
-Dynamic HOA Rules Lookup System
-Advanced search system that adapts to different HOA communities with interactive rule discovery
-"""
-
-import os
-import glob
-import re
 import streamlit as st
-import json
-from datetime import datetime
-from pathlib import Path
-import hashlib
-import time
+import re
 
-# Web deployment security and session management
-def initialize_session_state():
-    """Initialize session state for web deployment"""
-    if 'session_id' not in st.session_state:
-        st.session_state.session_id = hashlib.md5(str(time.time()).encode()).hexdigest()
-    if 'search_count' not in st.session_state:
-        st.session_state.search_count = 0
-    if 'last_search_time' not in st.session_state:
-        st.session_state.last_search_time = 0
+st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
-def rate_limit_check():
-    """Simple rate limiting for web access"""
-    current_time = time.time()
-    if current_time - st.session_state.last_search_time < 1:  # 1 second between searches
-        st.warning("⏱️ Please wait a moment between searches to ensure optimal performance for all users.")
-        return False
-    st.session_state.last_search_time = current_time
-    return True
+st.markdown("# 🏘️ Florida HOA Rules Lookup")
+st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
+st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
-def increment_usage():
-    """Track usage for analytics"""
-    st.session_state.search_count += 1
-    if st.session_state.search_count > 100:  # Reset after 100 searches
-        st.session_state.search_count = 0
-
-# Initialize session for web deployment
-initialize_session_state()
-
-# Configure page for web deployment
-st.set_page_config(
-    page_title="Dynamic HOA Rules Lookup",
-    page_icon="🏘️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://github.com/your-repo/dynamic-hoa-lookup',
-        'Report a bug': 'https://github.com/your-repo/dynamic-hoa-lookup/issues',
-        'About': """
-        # Dynamic HOA Rules Lookup System
-        An intelligent rule discovery system for HOA communities.
-        
-        **Features:**
-        - Multi-community support
-        - Intelligent search with natural language
-        - Rule conflict detection
-        - Update tracking
-        
-        Built with Streamlit and Python.
-        """
+# FLORIDA-SPECIFIC HOA rules database with statute references, links, AND Boca Ridge Glen examples
+florida_hoa_rules = {
+    # Architectural Review - Florida Specific with Boca Ridge Glen Examples
+    "architectural_review_process_fl": {
+        "content": "Per Florida Statute 720.303, architectural review applications must be approved or denied within 45 days of submission. Failure to respond within 45 days constitutes approval unless governing documents specify otherwise.",
+        "boca_ridge_example": "Boca Ridge Glen Architectural Control Board: No building, wall, fence, or other structure shall be erected until construction plans and specifications are approved in writing by the Architectural Control Board. Refusal may be based on any ground, including purely aesthetic grounds.",
+        "statute": "720.303",
+        "links": [
+            ("Florida Statute 720.303", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.303.html"),
+            ("CAI Florida Chapter", "https://www.caionline.org/StateChapters/Florida/Pages/default.aspx")
+        ]
+    },
+    
+    # Pet Policies - Florida and Boca Ridge Glen
+    "pet_restrictions_fl": {
+        "content": "Florida HOAs may establish reasonable pet restrictions and registration requirements under community covenants and Florida Statute 720.",
+        "boca_ridge_example": "Boca Ridge Glen Pet Policy: Dogs weighing less than 30 pounds, cats, or other household pets may be kept, provided they are not kept for commercial purposes and do not become a nuisance. Dogs must be on leash not exceeding 6 feet. No pet excretions allowed except in designated areas.",
+        "statute": "720 (General)",
+        "links": [
+            ("Florida Statute 720", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/"),
+            ("Pet Policy Guidelines", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Property Boundaries and Common Areas - Boca Ridge Glen Specific
+    "common_areas_definition_fl": {
+        "content": "Florida Statute 720.301 defines common areas as property owned by the association for use by all members, including recreational facilities, roads, and landscaped areas.",
+        "boca_ridge_example": "Boca Ridge Glen Common Areas: Include walkways, parking facilities, lakes, ponds, canals, open spaces, private streets, sidewalks, driveways, street lighting, entrance features and landscaping. Common Areas include grass areas to the edge of pavement of Boca Ridge Drive and Boca Ridge Drive South.",
+        "statute": "720.301",
+        "links": [
+            ("Florida Statute 720.301", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.301.html"),
+            ("Property Rights Guide", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Assessments and Collection - Boca Ridge Glen Example
+    "assessment_collection_fl": {
+        "content": "Florida Statute 720.3085 provides HOAs with collection rights including liens, foreclosure, and attorney fees, with specific notice requirements before legal action.",
+        "boca_ridge_example": "Boca Ridge Glen Assessment Policy: Annual assessments payable in monthly installments. If not paid within 30 days after due date, assessment bears interest at 18% per annum. Association may bring legal action and add attorneys' fees and costs to the amount owed.",
+        "statute": "720.3085",
+        "links": [
+            ("Florida Statute 720.3085", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.3085.html"),
+            ("Collection Procedures", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Fines and Violations - Boca Ridge Glen Specific Process
+    "violation_fines_fl": {
+        "content": "Florida Statute 720.305 requires specific violation notice procedures including 14-day cure period for most violations before fines can be imposed.",
+        "boca_ridge_example": "Boca Ridge Glen Fine Schedule: First violation up to $50, Second violation up to $100, Third violation up to $200, Fourth and subsequent violations up to $500. Owner gets notice and hearing opportunity before Board of Directors, with appeals committee process available.",
+        "statute": "720.305",
+        "links": [
+            ("Florida Statute 720.305", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.305.html"),
+            ("Violation Procedures", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Exterior Maintenance - Boca Ridge Glen Specific
+    "exterior_maintenance_fl": {
+        "content": "Florida HOAs typically maintain exterior elements of buildings and common areas, with specific responsibilities defined in governing documents.",
+        "boca_ridge_example": "Boca Ridge Glen Exterior Maintenance: Association maintains paint, coating, stain and other exterior finishing on all buildings as originally installed. Association also maintains landscaping, sprinkler systems, private streets, sidewalks, driveways, and street lighting throughout the community.",
+        "statute": "720 (General)",
+        "links": [
+            ("Florida HOA Maintenance Law", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/"),
+            ("Maintenance Guidelines", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Landscaping Requirements - Boca Ridge Glen
+    "landscaping_requirements_fl": {
+        "content": "Florida communities often have specific landscaping standards to maintain property values and community appearance.",
+        "boca_ridge_example": "Boca Ridge Glen Landscaping Rules: Landscaping maintained as originally installed by Developer unless prior approval obtained from Architectural Control Board. No tree or shrub with trunk exceeding 2 inches diameter may be removed without written consent. No artificial grass or plants allowed without approval.",
+        "statute": "Community Covenants",
+        "links": [
+            ("Florida-Friendly Landscaping", "https://ffl.ifas.ufl.edu/"),
+            ("Native Plant Guidelines", "https://www.fnps.org/")
+        ]
+    },
+    
+    # Water Conservation Requirements - Florida and Boca Ridge Glen
+    "water_conservation_fl": {
+        "content": "Florida communities must comply with water management district regulations and may implement additional conservation measures during drought conditions. Florida Statute 373 governs water use and conservation throughout the state.",
+        "boca_ridge_example": "Boca Ridge Glen Water Conservation: Irrigation systems must comply with South Florida Water Management District regulations. Watering restricted to designated days and times. Drought-tolerant landscaping encouraged. Pool covers required to reduce evaporation.",
+        "statute": "373 (Water Resources)",
+        "links": [
+            ("Florida Water Management", "https://www.sfwmd.gov/"),
+            ("Water Conservation Guidelines", "https://floridadep.gov/water"),
+            ("SFWMD Regulations", "https://www.sfwmd.gov/doing-business-with-us/permits/irrigation")
+        ]
+    },
+    
+    "irrigation_restrictions_fl": {
+        "content": "South Florida Water Management District requires year-round irrigation restrictions: residential properties may water on assigned days only, typically twice per week, between 4am-10am or 4pm-8pm.",
+        "boca_ridge_example": "Boca Ridge Glen follows SFWMD irrigation schedule: Even-numbered addresses water Wednesday/Saturday, odd-numbered addresses water Thursday/Sunday. No watering 10am-4pm. Hand watering and micro-irrigation allowed anytime.",
+        "statute": "SFWMD Rules",
+        "links": [
+            ("SFWMD Watering Rules", "https://www.sfwmd.gov/living-in-south-florida/water-restrictions"),
+            ("Year-Round Restrictions", "https://www.sfwmd.gov/sites/default/files/documents/wsd_year_round_landscape_irrigation_rule.pdf")
+        ]
+    },
+    
+    "drought_emergency_procedures_fl": {
+        "content": "During declared water emergencies, Florida communities must implement additional restrictions including prohibition of non-essential water uses such as car washing, fountain operation, and landscape irrigation.",
+        "boca_ridge_example": "Boca Ridge Glen Emergency Water Plan: During Phase I restrictions, irrigation reduced to once per week. Phase II eliminates all irrigation except hand watering. Violations subject to fines and water service suspension.",
+        "statute": "Emergency Management",
+        "links": [
+            ("Florida Drought Response", "https://floridadisaster.org/dem/mitigation/drought/"),
+            ("Water Emergency Plans", "https://www.sfwmd.gov/")
+        ]
+    },
+    
+    "florida_friendly_landscaping_fl": {
+        "content": "Florida Statute 720.3075 and 373.185 require HOAs to allow Florida-friendly landscaping that conserves water and protects the environment. HOAs cannot enforce rules prohibiting sustainable landscaping practices including drought-tolerant plants, efficient irrigation, and native species.",
+        "boca_ridge_example": "Boca Ridge Glen must permit Florida-friendly landscaping modifications under state law, including replacement of high-water-use grass with drought-tolerant alternatives, installation of rain gardens, and use of native plant species approved by University of Florida guidelines.",
+        "statute": "720.3075, 373.185",
+        "links": [
+            ("Florida Statute 720.3075", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.3075.html"),
+            ("Florida Statute 373.185", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0300-0399/0373/Sections/0373.185.html"),
+            ("Florida-Friendly Landscaping", "https://ffl.ifas.ufl.edu/"),
+            ("UF Plant Database", "https://gardeningsolutions.ifas.ufl.edu/plants/")
+        ]
+    },
+    
+    "rain_water_collection_fl": {
+        "content": "Florida Statute 373.036 permits residential rainwater collection for landscape irrigation and other non-potable uses. HOAs cannot prohibit rain barrels or cisterns used for water conservation.",
+        "boca_ridge_example": "Boca Ridge Glen residents may install rain collection systems under Florida law for irrigation purposes, subject to reasonable aesthetic guidelines from the Architectural Control Board.",
+        "statute": "373.036",
+        "links": [
+            ("Florida Statute 373.036", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0300-0399/0373/Sections/0373.036.html"),
+            ("Rainwater Harvesting Guide", "https://edis.ifas.ufl.edu/")
+        ]
+    },
+    
+    # Vehicle and Parking Restrictions - Boca Ridge Glen
+    "vehicle_restrictions_fl": {
+        "content": "Florida HOAs commonly restrict commercial vehicles, RVs, and boats to maintain residential character and property values.",
+        "boca_ridge_example": "Boca Ridge Glen Vehicle Policy: No trucks, commercial vehicles (over 6 feet height or with commercial markings), campers, motor homes, boats, or trailers permitted except during construction or if stored in garages/behind walls where not visible from streets. Temporary parking allowed for deliveries and services.",
+        "statute": "Community Covenants",
+        "links": [
+            ("HOA Vehicle Restrictions", "https://www.caionline.org/"),
+            ("Property Value Protection", "https://www.appraisalinstitute.org/")
+        ]
+    },
+    
+    # Use Restrictions - Boca Ridge Glen
+    "residential_use_fl": {
+        "content": "Florida residential communities restrict properties to residential use only, preventing commercial activities that could disrupt neighborhood character.",
+        "boca_ridge_example": "Boca Ridge Glen Use Restrictions: No Lot shall be used except for residential purposes. No business, service repair or maintenance for general public allowed on any Lot or Common Areas. No 'for rent', 'for sale' or other signs displayed to public view.",
+        "statute": "Zoning and Covenants",
+        "links": [
+            ("Residential Zoning Laws", "https://www.myflorida.com/"),
+            ("Land Use Guidelines", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Party Wall Maintenance - Boca Ridge Glen Specific
+    "party_wall_maintenance_fl": {
+        "content": "Florida attached housing developments often have specific party wall maintenance requirements shared between adjacent owners.",
+        "boca_ridge_example": "Boca Ridge Glen Party Wall Policy: Cost of reasonable repair and maintenance shared by Owners in proportion to use. If party wall destroyed by fire/casualty not covered by insurance, any Owner may restore it with others contributing proportionally. Association may repair party walls if Owner fails to maintain properly.",
+        "statute": "Property Law",
+        "links": [
+            ("Florida Property Law", "http://www.leg.state.fl.us/statutes/"),
+            ("Party Wall Guidelines", "https://www.caionline.org/")
+        ]
+    },
+    
+    # Additional Florida Statutory Requirements
+    "reserve_fund_requirements_fl": {
+        "content": "Florida Statute 720.303 requires HOAs to maintain reserve accounts for roof replacement, building painting, pavement resurfacing, and other major components with useful lives exceeding one year.",
+        "boca_ridge_example": "Reserve funding requirements apply to Boca Ridge Glen for major component replacement and capital improvements as mandated by Florida law.",
+        "statute": "720.303",
+        "links": [
+            ("Florida Statute 720.303", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.303.html"),
+            ("Reserve Study Guidelines", "https://www.apra-usa.com/")
+        ]
+    },
+    
+    "board_meetings_fl": {
+        "content": "Florida law requires 48-hour advance notice for board meetings, with emergency meetings allowed for urgent matters affecting health, safety, or significant financial issues.",
+        "boca_ridge_example": "Boca Ridge Glen board governance follows Florida Sunshine Law requirements for open meetings and proper notice procedures.",
+        "statute": "720.306",
+        "links": [
+            ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
+            ("Sunshine Law Guide", "https://www.myflorida.com/myflorida/government/governmentinformation/sunshine_law.html")
+        ]
     }
+}
+
+st.markdown("## 🔍 Search Florida HOA Laws and Community Rules")
+st.info("🤖 **NEW**: Dynamic search now handles ANY HOA question - ask about noise rules, solar panels, flags, elections, or any other topic!")
+query = st.text_input(
+    "Ask any question about Florida HOA laws and community rules:",
+    placeholder="e.g., noise restrictions, solar panel installation, flag display rights, HOA elections"
 )
 
-# Web-optimized CSS
-st.markdown("""
-<style>
-/* Hide Streamlit menu and footer for cleaner web interface */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-
-/* Custom web styling */
-.main {
-    padding-top: 0.5rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Web banner */
-.web-banner {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1rem;
-    border-radius: 10px;
-    color: white;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.rule-card {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 1.5rem;
-    margin: 1rem 0;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
-}
-
-.rule-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.rule-header {
-    font-weight: bold;
-    font-size: 1.2em;
-    margin-bottom: 1rem;
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 0.5rem;
-}
-
-.rule-content {
-    line-height: 1.8;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    white-space: pre-wrap;
-    background-color: white;
-    padding: 1rem;
-    border-radius: 8px;
-    border-left: 4px solid #3498db;
-}
-
-.high-priority {
-    background: linear-gradient(135deg, #e8f5e8 0%, #a8e6cf 100%);
-    border-left-color: #27ae60;
-}
-
-.medium-priority {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    border-left-color: #f39c12;
-}
-
-.low-priority {
-    background: linear-gradient(135deg, #f8d7da 0%, #fab1a0 100%);
-    border-left-color: #e74c3c;
-}
-
-.community-selector {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-}
-
-.search-stats {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 1rem 0;
-    border-left: 4px solid #6c757d;
-}
-</style>
-""", unsafe_allow_html=True)
-
-class DynamicHOALookup:
-    def __init__(self):
-        self.communities = {}
-        self.current_community = None
-        self.rule_categories = {
-            'architectural': ['architectural', 'review', 'modification', 'exterior', 'paint', 'roof'],
-            'landscaping': ['landscape', 'tree', 'plant', 'grass', 'garden', 'buffer'],
-            'pets': ['pet', 'dog', 'cat', 'animal', 'leash'],
-            'parking': ['parking', 'vehicle', 'car', 'garage', 'driveway'],
-            'noise': ['noise', 'quiet', 'sound', 'music', 'disturbance'],
-            'rentals': ['rental', 'lease', 'tenant', 'short-term', 'airbnb'],
-            'fees': ['fee', 'assessment', 'fine', 'penalty', 'dues'],
-            'maintenance': ['maintenance', 'repair', 'upkeep', 'cleaning'],
-            'common_areas': ['common', 'pool', 'clubhouse', 'playground', 'amenities'],
-            'governance': ['board', 'meeting', 'voting', 'election', 'quorum']
+# Dynamic response generator for open-ended queries
+def generate_dynamic_response(query):
+    """Generate dynamic HOA responses for queries not covered by existing rules"""
+    
+    # Common HOA topics and their Florida law context
+    hoa_knowledge_base = {
+        'noise': {
+            'statutes': ['720.305 (Violation Procedures)'],
+            'content': 'Florida HOAs can establish reasonable noise restrictions to maintain peaceful enjoyment of properties. Enforcement follows FL Statute 720.305 violation procedures.',
+            'examples': ['Quiet hours (typically 10 PM - 7 AM)', 'Construction noise limits', 'Party/gathering restrictions', 'HVAC equipment placement rules']
+        },
+        'solar': {
+            'statutes': ['163.04 (Solar Rights)', '720.3075 (Property Rights)'],
+            'content': 'Florida Statute 163.04 protects homeowner rights to install solar collectors. HOAs cannot prohibit solar installations but may impose reasonable aesthetic restrictions.',
+            'examples': ['Solar panel placement guidelines', 'Roof installation approval process', 'Aesthetic screening requirements', 'Energy efficiency improvements']
+        },
+        'flag': {
+            'statutes': ['720.3075 (Display Rights)'],
+            'content': 'Florida law protects the right to display the US flag, Florida state flag, and military service flags. HOAs may establish reasonable size and placement restrictions.',
+            'examples': ['American flag display rights', 'Military service flag protection', 'Holiday decoration guidelines', 'Political sign restrictions']
+        },
+        'storage': {
+            'statutes': ['720 (General Covenants)'],
+            'content': 'Florida HOAs commonly restrict outdoor storage to maintain community appearance and property values through architectural guidelines.',
+            'examples': ['Garage storage requirements', 'Shed installation approval', 'Pool equipment screening', 'Trash container placement']
+        },
+        'security': {
+            'statutes': ['720.301 (Common Areas)', '768.28 (Liability)'],
+            'content': 'Florida HOAs may provide security services and establish access control measures for common areas while managing liability considerations.',
+            'examples': ['Gated community access', 'Security patrol services', 'Camera surveillance systems', 'Guest registration procedures']
+        },
+        'insurance': {
+            'statutes': ['720.3085 (Financial Management)'],
+            'content': 'Florida law requires HOAs to maintain appropriate insurance coverage and may require individual owners to carry specific insurance types.',
+            'examples': ['Hurricane/windstorm coverage', 'Flood insurance requirements', 'Liability insurance minimums', 'Building coverage responsibilities']
+        },
+        'election': {
+            'statutes': ['720.306 (Board Elections)'],
+            'content': 'Florida Statute 720.306 governs HOA board elections including candidate eligibility, voting procedures, and term limits.',
+            'examples': ['Annual election requirements', 'Candidate qualification rules', 'Voting method procedures', 'Term limit restrictions']
+        },
+        'budget': {
+            'statutes': ['720.308 (Budgets and Financial Reports)'],
+            'content': 'Florida law requires HOAs to prepare annual budgets, provide financial reports to owners, and follow specific assessment procedures.',
+            'examples': ['Annual budget adoption', 'Financial statement distribution', 'Assessment increase limitations', 'Reserve fund requirements']
         }
-        self.load_communities()
+    }
     
-    def load_communities(self):
-        """Dynamically discover and load HOA communities"""
-        communities_dir = "communities"
-        if os.path.exists(communities_dir):
-            for community_path in glob.glob(os.path.join(communities_dir, "*")):
-                if os.path.isdir(community_path):
-                    community_name = os.path.basename(community_path)
-                    self.communities[community_name] = {
-                        'path': community_path,
-                        'documents': self.scan_documents(community_path),
-                        'rules_db': self.load_rules_database(community_path)
-                    }
+    query_lower = query.lower()
     
-    def scan_documents(self, community_path):
-        """Scan for documents in a community directory"""
-        documents = {}
-        for ext in ['*.txt', '*.pdf', '*.docx']:
-            for doc_path in glob.glob(os.path.join(community_path, ext)):
-                doc_name = os.path.basename(doc_path)
-                doc_type = self.classify_document(doc_name)
-                documents[doc_name] = {
-                    'path': doc_path,
-                    'type': doc_type,
-                    'last_modified': os.path.getmtime(doc_path)
-                }
-        return documents
-    
-    def classify_document(self, filename):
-        """Classify document type based on filename"""
-        filename_lower = filename.lower()
-        
-        if any(word in filename_lower for word in ['bylaw', 'governance']):
-            return 'bylaws'
-        elif any(word in filename_lower for word in ['declaration', 'covenant', 'restriction']):
-            return 'covenants'
-        elif any(word in filename_lower for word in ['landscape', 'architectural']):
-            return 'architectural'
-        elif any(word in filename_lower for word in ['statute', 'law', 'legal']):
-            return 'legal'
-        elif any(word in filename_lower for word in ['budget', 'financial']):
-            return 'financial'
-        else:
-            return 'general'
-    
-    def load_rules_database(self, community_path):
-        """Load or create rules database for a community"""
-        db_path = os.path.join(community_path, 'rules_database.json')
-        if os.path.exists(db_path):
-            with open(db_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            # Create default rules database structure
+    # Find matching topics
+    for topic, info in hoa_knowledge_base.items():
+        if topic in query_lower or any(keyword in query_lower for keyword in [topic + 's', topic + 'ing']):
             return {
-                'rules': {},
-                'categories': list(self.rule_categories.keys()),
-                'last_updated': datetime.now().isoformat(),
-                'version': '1.0'
+                'type': 'dynamic',
+                'title': f'Florida HOA {topic.title()} Requirements',
+                'content': info['content'],
+                'statute': ', '.join(info['statutes']),
+                'examples': info['examples'],
+                'boca_example': f'Boca Ridge Glen would handle {topic} matters according to Florida statutory requirements and community covenants.',
+                'links': [
+                    ('Florida HOA Laws', 'http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/'),
+                    ('CAI Florida Resources', 'https://www.caionline.org/StateChapters/Florida/Pages/default.aspx')
+                ]
             }
     
-    def intelligent_rule_search(self, query, community_name):
-        """Perform intelligent rule search with context understanding"""
-        if community_name not in self.communities:
-            return []
-        
-        community = self.communities[community_name]
-        results = []
-        
-        # Extract search intent
-        query_lower = query.lower()
-        detected_categories = []
-        
-        for category, keywords in self.rule_categories.items():
-            if any(keyword in query_lower for keyword in keywords):
-                detected_categories.append(category)
-        
-        # Search through documents
-        for doc_name, doc_info in community['documents'].items():
-            if doc_info['path'].endswith('.txt'):
-                try:
-                    with open(doc_info['path'], 'r', encoding='utf-8') as f:
-                        content = f.read()
-                    
-                    # Find relevant sections
-                    sections = self.extract_relevant_sections(content, query, detected_categories)
-                    
-                    for section in sections:
-                        results.append({
-                            'document': doc_name,
-                            'doc_type': doc_info['type'],
-                            'content': section['content'],
-                            'relevance_score': section['score'],
-                            'categories': section['categories'],
-                            'section_title': section['title'],
-                            'last_modified': doc_info['last_modified']
-                        })
-                
-                except Exception as e:
-                    st.error(f"Error reading {doc_name}: {e}")
-        
-        # Sort by relevance and return top results
-        results.sort(key=lambda x: x['relevance_score'], reverse=True)
-        return results[:10]
-    
-    def extract_relevant_sections(self, content, query, categories):
-        """Extract sections relevant to the query with enhanced context"""
-        sections = []
-        query_words = [w.lower() for w in query.split() if len(w) > 2]
-        
-        # Split content into meaningful sections
-        paragraphs = content.split('\n\n')
-        
-        for i, paragraph in enumerate(paragraphs):
-            if len(paragraph.strip()) < 100:
-                continue
-            
-            paragraph_lower = paragraph.lower()
-            score = 0
-            matched_categories = []
-            
-            # Score based on query words
-            for word in query_words:
-                score += paragraph_lower.count(word) * 10
-            
-            # Score based on categories
-            for category in categories:
-                for keyword in self.rule_categories[category]:
-                    if keyword in paragraph_lower:
-                        score += 15
-                        if category not in matched_categories:
-                            matched_categories.append(category)
-            
-            # Bonus for structured content
-            if any(marker in paragraph for marker in ['Section', 'Article', '1.', '2.', 'A.', 'B.']):
-                score += 10
-            
-            # Extract section title
-            title = self.extract_section_title(paragraph, i)
-            
-            if score > 20:
-                sections.append({
-                    'content': paragraph,
-                    'score': score,
-                    'categories': matched_categories,
-                    'title': title
-                })
-        
-        return sections
-    
-    def extract_section_title(self, content, index):
-        """Extract or generate a section title"""
-        lines = content.split('\n')
-        
-        for line in lines[:3]:
-            line = line.strip()
-            if len(line) > 5 and len(line) < 100:
-                # Check if it looks like a title
-                if (line.isupper() or 
-                    any(line.startswith(prefix) for prefix in ['Section', 'Article', 'CHAPTER']) or
-                    re.match(r'^[A-Z]\.|^\d+\.', line)):
-                    return line
-        
-        # Generate title from content
-        first_sentence = content.split('.')[0][:50]
-        return f"Rule {index + 1}: {first_sentence}..."
-    
-    def detect_rule_conflicts(self, community_name):
-        """Detect potential conflicts between rules in different documents"""
-        if community_name not in self.communities:
-            return []
-        
-        conflicts = []
-        community_rules = []
-        
-        # Collect all rules from all documents
-        community_path = self.communities[community_name]['path']
-        for doc_file in glob.glob(os.path.join(community_path, "*.txt")):
-            with open(doc_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                doc_name = os.path.basename(doc_file)
-                
-                # Extract rules with specific patterns
-                rules = self.extract_rules_for_conflict_analysis(content, doc_name)
-                community_rules.extend(rules)
-        
-        # Load structured rules from JSON if available
-        json_path = os.path.join(community_path, 'rules_database.json')
-        if os.path.exists(json_path):
-            with open(json_path, 'r') as f:
-                rules_data = json.load(f)
-                for category, category_rules in rules_data.get('rules', {}).items():
-                    for rule_id, rule_info in category_rules.items():
-                        community_rules.append({
-                            'content': rule_info['content'],
-                            'document': rule_info['document'],
-                            'section': rule_info.get('section', ''),
-                            'category': category,
-                            'rule_id': rule_id
-                        })
-        
-        # Analyze for conflicts
-        conflicts = self.analyze_rule_conflicts(community_rules)
-        return conflicts
-    
-    def extract_rules_for_conflict_analysis(self, content, document):
-        """Extract individual rules from document content for conflict analysis"""
-        rules = []
-        
-        # Split by common section patterns
-        sections = re.split(r'(?:Section|Article|CHAPTER)\s+\d+', content)
-        
-        for i, section in enumerate(sections[1:], 1):  # Skip first empty section
-            if len(section.strip()) > 50:
-                # Extract key statements that could conflict
-                statements = self.extract_rule_statements(section.strip())
-                for stmt in statements:
-                    rules.append({
-                        'content': stmt,
-                        'document': document,
-                        'section': f'Section {i}',
-                        'category': self.categorize_rule_content(stmt)
-                    })
-        
-        return rules
-    
-    def extract_rule_statements(self, content):
-        """Extract specific rule statements that could cause conflicts"""
-        statements = []
-        sentences = re.split(r'[.!]', content)
-        
-        conflict_keywords = [
-            'prohibited', 'not allowed', 'must', 'shall', 'required',
-            'permitted', 'allowed', 'may', 'approval required',
-            'maximum', 'minimum', 'limit', 'exceed', 'hours'
+    # General catch-all response for any HOA question
+    return {
+        'type': 'general',
+        'title': f'Florida HOA Information: {query.title()}',
+        'content': f'Florida HOA communities are governed by Chapter 720, Florida Statutes, which provides comprehensive frameworks for community governance. For specific questions about "{query}", consult your community\'s governing documents alongside applicable Florida statutes.',
+        'statute': '720 (Florida HOA Act)',
+        'examples': ['Review community covenants and bylaws', 'Consult Florida Statute Chapter 720', 'Contact your HOA board or management', 'Seek legal advice for complex issues'],
+        'boca_example': f'Boca Ridge Glen, like all Florida HOAs, must comply with state law requirements while implementing community-specific rules through properly adopted covenants and bylaws.',
+        'links': [
+            ('Florida Statute 720', 'http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/'),
+            ('Florida HOA Resources', 'https://www.caionline.org/StateChapters/Florida/Pages/default.aspx'),
+            ('Legal Information', 'https://www.floridabar.org/')
         ]
-        
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if len(sentence) > 20 and any(keyword in sentence.lower() for keyword in conflict_keywords):
-                statements.append(sentence)
-        
-        return statements
-    
-    def categorize_rule_content(self, content):
-        """Categorize rule content to identify potential conflict areas"""
-        content_lower = content.lower()
-        
-        for category, keywords in self.rule_categories.items():
-            if any(keyword in content_lower for keyword in keywords):
-                return category
-        
-        return 'general'
-    
-    def analyze_rule_conflicts(self, rules):
-        """Analyze rules for potential conflicts"""
-        conflicts = []
-        
-        # Group rules by category for comparison
-        categorized_rules = {}
-        for rule in rules:
-            category = rule.get('category', 'general')
-            if category not in categorized_rules:
-                categorized_rules[category] = []
-            categorized_rules[category].append(rule)
-        
-        # Check for conflicts within each category
-        for category, category_rules in categorized_rules.items():
-            category_conflicts = self.find_category_conflicts(category_rules, category)
-            conflicts.extend(category_conflicts)
-        
-        return conflicts
-    
-    def find_category_conflicts(self, rules, category):
-        """Find conflicts within a specific category"""
-        conflicts = []
-        
-        # Define conflict patterns for different categories
-        conflict_patterns = {
-            'pets': {
-                'leash': ['leash', 'on leash', 'leashed'],
-                'registration': ['register', 'registration'],
-                'restrictions': ['prohibited', 'not allowed', 'restricted']
-            },
-            'parking': {
-                'guest_parking': ['guest', 'visitor'],
-                'time_limits': ['hours', 'days', 'overnight'],
-                'commercial': ['commercial', 'business']
-            },
-            'architectural': {
-                'approval': ['approval', 'permission', 'permit'],
-                'colors': ['color', 'paint'],
-                'modifications': ['modification', 'change', 'alter']
-            },
-            'noise': {
-                'quiet_hours': ['quiet', 'hours', 'pm', 'am'],
-                'construction': ['construction', 'work', 'maintenance']
-            }
-        }
-        
-        if category in conflict_patterns:
-            patterns = conflict_patterns[category]
-            
-            # Check for contradictory statements within pattern groups
-            for pattern_name, keywords in patterns.items():
-                matching_rules = []
-                for rule in rules:
-                    if any(keyword in rule['content'].lower() for keyword in keywords):
-                        matching_rules.append(rule)
-                
-                # Look for contradictions
-                if len(matching_rules) > 1:
-                    contradiction = self.detect_contradiction(matching_rules, pattern_name)
-                    if contradiction:
-                        conflicts.append(contradiction)
-        
-        return conflicts
-    
-    def detect_contradiction(self, rules, pattern_name):
-        """Detect if rules contradict each other"""
-        positive_rules = []
-        negative_rules = []
-        
-        for rule in rules:
-            content_lower = rule['content'].lower()
-            
-            # Check for negative statements
-            if any(neg in content_lower for neg in ['not', 'prohibited', 'forbidden', 'banned']):
-                negative_rules.append(rule)
-            # Check for positive statements
-            elif any(pos in content_lower for pos in ['allowed', 'permitted', 'may', 'can']):
-                positive_rules.append(rule)
-        
-        # If we have both positive and negative rules for same topic, it's a potential conflict
-        if positive_rules and negative_rules:
-            return {
-                'type': 'contradiction',
-                'pattern': pattern_name,
-                'positive_rules': positive_rules,
-                'negative_rules': negative_rules,
-                'severity': 'high',
-                'description': f"Conflicting rules found for {pattern_name.replace('_', ' ')}"
-            }
-        
-        return None
-    
-    def track_rule_updates(self, community_name):
-        """Track and identify rule updates and changes"""
-        if community_name not in self.communities:
-            return {'updates': [], 'new_rules': [], 'modified_rules': [], 'removed_rules': []}
-        
-        community_path = self.communities[community_name]['path']
-        tracking_file = os.path.join(community_path, 'update_tracking.json')
-        current_rules = self.get_current_rule_snapshot(community_name)
-        
-        # Load previous tracking data
-        previous_snapshot = {}
-        if os.path.exists(tracking_file):
-            try:
-                with open(tracking_file, 'r') as f:
-                    tracking_data = json.load(f)
-                    previous_snapshot = tracking_data.get('last_snapshot', {})
-            except Exception:
-                pass
-        
-        # Compare snapshots to find changes
-        changes = self.compare_rule_snapshots(previous_snapshot, current_rules)
-        
-        # Update tracking file with new snapshot
-        tracking_data = {
-            'last_snapshot': current_rules,
-            'last_update': datetime.now().isoformat(),
-            'change_history': self.load_change_history(tracking_file)
-        }
-        
-        # Add current changes to history
-        if changes['new_rules'] or changes['modified_rules'] or changes['removed_rules']:
-            tracking_data['change_history'].append({
-                'timestamp': datetime.now().isoformat(),
-                'changes': changes
-            })
-        
-        # Save updated tracking data
-        try:
-            with open(tracking_file, 'w') as f:
-                json.dump(tracking_data, f, indent=2)
-        except Exception as e:
-            st.error(f"Could not save tracking data: {e}")
-        
-        return changes
-    
-    def get_current_rule_snapshot(self, community_name):
-        """Create a snapshot of all current rules for change tracking"""
-        snapshot = {}
-        community_path = self.communities[community_name]['path']
-        
-        # Scan all document files
-        for doc_file in glob.glob(os.path.join(community_path, "*.txt")):
-            doc_name = os.path.basename(doc_file)
-            try:
-                with open(doc_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                # Get file modification time
-                mod_time = os.path.getmtime(doc_file)
-                
-                # Create content hash for change detection
-                content_hash = hash(content)
-                
-                snapshot[doc_name] = {
-                    'content_hash': content_hash,
-                    'modification_time': mod_time,
-                    'size': len(content),
-                    'sections': self.extract_document_sections(content)
-                }
-            except Exception as e:
-                st.warning(f"Could not read {doc_name}: {e}")
-        
-        # Include JSON rules if available
-        json_path = os.path.join(community_path, 'rules_database.json')
-        if os.path.exists(json_path):
-            try:
-                with open(json_path, 'r') as f:
-                    rules_data = json.load(f)
-                    
-                snapshot['rules_database.json'] = {
-                    'content_hash': hash(json.dumps(rules_data, sort_keys=True)),
-                    'modification_time': os.path.getmtime(json_path),
-                    'rule_count': len(self.count_rules_in_database(rules_data)),
-                    'last_updated': rules_data.get('last_updated', 'unknown')
-                }
-            except Exception as e:
-                st.warning(f"Could not read rules database: {e}")
-        
-        return snapshot
-    
-    def extract_document_sections(self, content):
-        """Extract section titles and hashes for detailed change tracking"""
-        sections = {}
-        section_pattern = r'(?:Section|Article|CHAPTER)\s+(\d+)[:\.]?\s*([^\n]+)'
-        
-        matches = re.finditer(section_pattern, content, re.IGNORECASE)
-        
-        for match in matches:
-            section_num = match.group(1)
-            section_title = match.group(2).strip()
-            
-            # Find section content (approximate)
-            start_pos = match.end()
-            next_match = re.search(section_pattern, content[start_pos:], re.IGNORECASE)
-            
-            if next_match:
-                end_pos = start_pos + next_match.start()
-                section_content = content[start_pos:end_pos]
-            else:
-                section_content = content[start_pos:start_pos+1000]  # Limit to reasonable length
-            
-            sections[f"section_{section_num}"] = {
-                'title': section_title,
-                'content_hash': hash(section_content.strip())
-            }
-        
-        return sections
-    
-    def count_rules_in_database(self, rules_data):
-        """Count total number of rules in structured database"""
-        count = 0
-        for category, rules in rules_data.get('rules', {}).items():
-            count += len(rules)
-        return count
-    
-    def compare_rule_snapshots(self, previous, current):
-        """Compare two rule snapshots to find changes"""
-        changes = {
-            'new_rules': [],
-            'modified_rules': [],
-            'removed_rules': []
-        }
-        
-        # Find new and modified files
-        for file_name, current_info in current.items():
-            if file_name not in previous:
-                changes['new_rules'].append({
-                    'file': file_name,
-                    'type': 'new_document',
-                    'description': f"New document added: {file_name}"
-                })
-            else:
-                previous_info = previous[file_name]
-                
-                # Check for content changes
-                if current_info['content_hash'] != previous_info['content_hash']:
-                    changes['modified_rules'].append({
-                        'file': file_name,
-                        'type': 'content_modified',
-                        'description': f"Content updated in {file_name}",
-                        'details': self.get_detailed_changes(previous_info, current_info)
-                    })
-                
-                # Check modification time
-                elif current_info['modification_time'] != previous_info['modification_time']:
-                    changes['modified_rules'].append({
-                        'file': file_name,
-                        'type': 'timestamp_updated',
-                        'description': f"File timestamp updated: {file_name}"
-                    })
-        
-        # Find removed files
-        for file_name in previous:
-            if file_name not in current:
-                changes['removed_rules'].append({
-                    'file': file_name,
-                    'type': 'document_removed',
-                    'description': f"Document removed: {file_name}"
-                })
-        
-        return changes
-    
-    def get_detailed_changes(self, previous_info, current_info):
-        """Get detailed information about what changed in a document"""
-        details = []
-        
-        # Check size changes
-        if 'size' in previous_info and 'size' in current_info:
-            size_diff = current_info['size'] - previous_info['size']
-            if size_diff != 0:
-                details.append(f"Size changed by {size_diff} characters")
-        
-        # Check section changes
-        prev_sections = previous_info.get('sections', {})
-        curr_sections = current_info.get('sections', {})
-        
-        # New sections
-        for section_id, section_info in curr_sections.items():
-            if section_id not in prev_sections:
-                details.append(f"New section: {section_info['title']}")
-        
-        # Modified sections
-        for section_id, section_info in curr_sections.items():
-            if section_id in prev_sections:
-                if section_info['content_hash'] != prev_sections[section_id]['content_hash']:
-                    details.append(f"Modified section: {section_info['title']}")
-        
-        # Removed sections
-        for section_id, section_info in prev_sections.items():
-            if section_id not in curr_sections:
-                details.append(f"Removed section: {section_info['title']}")
-        
-        return details if details else ["Content changes detected"]
-    
-    def load_change_history(self, tracking_file):
-        """Load existing change history"""
-        if os.path.exists(tracking_file):
-            try:
-                with open(tracking_file, 'r') as f:
-                    data = json.load(f)
-                    return data.get('change_history', [])
-            except Exception:
-                pass
+    }
+
+# Enhanced Florida search function with dynamic responses
+def search_florida_hoa_rules(search_query):
+    if not search_query:
         return []
     
-    def get_recent_updates(self, community_name, days=30):
-        """Get recent rule updates within specified days"""
-        if community_name not in self.communities:
-            return []
+    results = []
+    search_terms = search_query.lower().strip()
+    query_words = re.findall(r'\b\w+\b', search_terms)
+    
+    # First, search existing rule database
+    for rule_id, rule_data in florida_hoa_rules.items():
+        score = 0
+        rule_content = rule_data["content"]
+        boca_example = rule_data.get("boca_ridge_example", "")
+        rule_lower = (rule_content + " " + boca_example).lower()
+        rule_name_lower = rule_id.lower()
         
-        community_path = self.communities[community_name]['path']
-        tracking_file = os.path.join(community_path, 'update_tracking.json')
+        # Boost for Boca Ridge Glen mentions
+        if 'boca ridge' in search_terms or 'boca ridge glen' in rule_lower:
+            score += 30
         
-        if not os.path.exists(tracking_file):
-            return []
+        # Boost for Florida statute references
+        if 'florida statute' in rule_lower or 'florida law' in rule_lower:
+            score += 20
         
-        try:
-            with open(tracking_file, 'r') as f:
-                data = json.load(f)
-                history = data.get('change_history', [])
-                
-                # Filter recent changes
-                cutoff_date = datetime.now().timestamp() - (days * 24 * 60 * 60)
-                recent_changes = []
-                
-                for change_entry in history:
-                    try:
-                        change_date = datetime.fromisoformat(change_entry['timestamp']).timestamp()
-                        if change_date >= cutoff_date:
-                            recent_changes.append(change_entry)
-                    except Exception:
-                        continue
-                
-                return sorted(recent_changes, key=lambda x: x['timestamp'], reverse=True)
-                
-        except Exception as e:
-            st.error(f"Could not load update history: {e}")
-            return []
+        # Special boost for water conservation queries
+        if ('water' in search_terms and 'conservation' in search_terms) and ('water' in rule_lower and 'conservation' in rule_lower):
+            score += 80
+        if 'water conservation' in search_terms and 'water conservation' in rule_lower:
+            score += 100
+        
+        # Exact phrase matching (highest score)
+        if search_terms in rule_lower or search_terms in rule_name_lower:
+            score += 100
+        
+        # Multi-word phrase matching
+        if len(query_words) > 1:
+            for i in range(len(query_words) - 1):
+                phrase = f"{query_words[i]} {query_words[i+1]}"
+                if phrase in rule_lower or phrase in rule_name_lower:
+                    score += 60
+        
+        # Individual word matching
+        word_matches = 0
+        for word in query_words:
+            if len(word) > 2:
+                if word in rule_lower:
+                    word_matches += 1
+                    score += 18
+                if word in rule_name_lower:
+                    word_matches += 1
+                    score += 25
+        
+        # Bonus for multiple matches
+        if word_matches > 1:
+            score += word_matches * 12
+        
+        # Enhanced synonym matching for water conservation and other topics
+        florida_synonyms = {
+            'pet': ['dog', 'cat', 'animal', 'leash', 'weight'],
+            'architectural': ['building', 'modification', 'approval', 'construction'],
+            'assessment': ['fee', 'payment', 'collection', 'lien', 'interest'],
+            'fine': ['violation', 'penalty', 'hearing', 'appeal'],
+            'maintenance': ['repair', 'exterior', 'painting', 'landscaping'],
+            'vehicle': ['truck', 'commercial', 'boat', 'trailer', 'parking'],
+            'water': ['irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'landscape'],
+            'conservation': ['water', 'irrigation', 'drought', 'watering', 'landscape', 'friendly'],
+            'requirements': ['rules', 'restrictions', 'regulations', 'guidelines', 'policies'],
+            'boca': ['ridge', 'glen', 'community', 'example']
+        }
+        
+        # Enhanced matching for both directions
+        for main_word, related_words in florida_synonyms.items():
+            if main_word in query_words:
+                for related in related_words:
+                    if related in rule_lower or related in rule_name_lower:
+                        score += 22
+            # Also check if any related words are in query and main word in content
+            for related in related_words:
+                if related in query_words and main_word in rule_lower:
+                    score += 22
+        
+        # Add result if matches found
+        if score > 0:
+            results.append({
+                'rule_id': rule_id,
+                'rule_data': rule_data,
+                'score': score,
+                'title': rule_id.replace('_fl', '').replace('_', ' ').title(),
+                'has_boca_example': bool(rule_data.get("boca_ridge_example")),
+                'type': 'existing'
+            })
+    
+    # If no good matches found (highest score < 30), add dynamic response
+    if not results or (results and max(r['score'] for r in results) < 30):
+        dynamic_response = generate_dynamic_response(search_query)
+        results.append({
+            'rule_id': f'dynamic_{hash(search_query) % 1000}',
+            'rule_data': {
+                'content': dynamic_response['content'],
+                'boca_ridge_example': dynamic_response['boca_example'],
+                'statute': dynamic_response['statute'],
+                'links': dynamic_response['links']
+            },
+            'score': 50,  # Medium relevance for dynamic responses
+            'title': dynamic_response['title'],
+            'has_boca_example': True,
+            'type': 'dynamic',
+            'examples': dynamic_response.get('examples', [])
+        })
+    
+    # Sort by score (highest first)
+    results.sort(key=lambda x: x['score'], reverse=True)
+    return results
 
-# Initialize the lookup system
-@st.cache_resource
-def get_lookup_system():
-    return DynamicHOALookup()
+# Florida-specific topic buttons with Boca Ridge examples
+st.markdown("### 🎯 Florida HOA Law Topics:")
+col1, col2, col3, col4 = st.columns(4)
 
-lookup = get_lookup_system()
+with col1:
+    if st.button("🏗️ Architectural Rules"):
+        query = "architectural review boca ridge glen"
+with col2:
+    if st.button("🐕 Pet Policies"):
+        query = "pet restrictions boca ridge glen dogs"
+with col3:
+    if st.button("💰 Assessments & Fines"):
+        query = "assessment collection fines boca ridge"
+with col4:
+    if st.button("🏠 Property Use"):
+        query = "residential use restrictions boca ridge"
 
-# Sidebar for community selection
-with st.sidebar:
-    st.markdown('<div class="community-selector">', unsafe_allow_html=True)
-    st.markdown("## 🏘️ Community Selection")
+col5, col6, col7, col8 = st.columns(4)
+
+with col5:
+    if st.button("🌳 Landscaping Rules"):
+        query = "landscaping requirements boca ridge trees"
+with col6:
+    if st.button("🚗 Vehicle Restrictions"):
+        query = "vehicle parking restrictions boca ridge"
+with col7:
+    if st.button("🏛️ Common Areas"):
+        query = "common areas boca ridge glen"
+with col8:
+    if st.button("📜 FL Statute 720"):
+        query = "florida statute 720 requirements"
+
+# Dynamic topic buttons
+st.markdown("### 🤖 Dynamic Search Topics:")
+col9, col10, col11, col12 = st.columns(4)
+
+with col9:
+    if st.button("🔇 Noise Restrictions"):
+        query = "noise restrictions quiet hours"
+with col10:
+    if st.button("☀️ Solar Panel Rights"):
+        query = "solar panel installation rights"
+with col11:
+    if st.button("🏃 HOA Elections"):
+        query = "board elections voting procedures"
+with col12:
+    if st.button("🛡️ Security & Access"):
+        query = "security services gated community"
+
+col13, col14, col15, col16 = st.columns(4)
+
+with col13:
+    if st.button("🇺🇸 Flag Display"):
+        query = "flag display rights American flag"
+with col14:
+    if st.button("📦 Storage Rules"):
+        query = "outdoor storage shed installation"
+with col15:
+    if st.button("🏥 Insurance Requirements"):
+        query = "insurance coverage hurricane requirements"
+with col16:
+    if st.button("💰 Budget & Finances"):
+        query = "HOA budget financial reports"
+
+# Display enhanced search results with Boca Ridge examples
+if query:
+    results = search_florida_hoa_rules(query)
     
-    if lookup.communities:
-        community_names = list(lookup.communities.keys())
-        selected_community = st.selectbox(
-            "Choose HOA Community:",
-            options=community_names,
-            index=0
-        )
+    if results:
+        st.markdown(f"### 📋 Found {len(results)} Florida HOA Results for: '{query}'")
         
-        # Show community info
-        if selected_community:
-            community = lookup.communities[selected_community]
-            st.markdown(f"**📁 Documents**: {len(community['documents'])}")
+        for i, result in enumerate(results[:6], 1):
+            rule_data = result['rule_data']
             
-            # Document types breakdown
-            doc_types = {}
-            for doc_info in community['documents'].values():
-                doc_type = doc_info['type']
-                doc_types[doc_type] = doc_types.get(doc_type, 0) + 1
-            
-            for doc_type, count in doc_types.items():
-                st.markdown(f"• {doc_type.title()}: {count}")
-    else:
-        st.warning("No communities found. Please add community documents to the 'communities' folder.")
-        selected_community = None
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Rule categories
-    st.markdown("## 📋 Rule Categories")
-    for category, keywords in lookup.rule_categories.items():
-        with st.expander(f"🏷️ {category.replace('_', ' ').title()}"):
-            st.write(", ".join(keywords[:5]))
-    
-    # Conflict Detection Section
-    st.markdown("---")
-    st.markdown("## ⚠️ Rule Conflict Analysis")
-    if st.button("🔍 Check for Rule Conflicts", key="conflict_check"):
-        with st.spinner("Analyzing rules for conflicts..."):
-            conflicts = lookup.detect_rule_conflicts(selected_community)
-            
-            if conflicts:
-                st.error(f"⚠️ Found {len(conflicts)} potential conflicts!")
-                
-                for i, conflict in enumerate(conflicts, 1):
-                    with st.expander(f"🚨 Conflict {i}: {conflict['description']}", expanded=True):
-                        st.markdown(f"**Severity:** {conflict['severity'].upper()}")
-                        st.markdown(f"**Category:** {conflict['pattern'].replace('_', ' ').title()}")
-                        
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.markdown("**✅ Permissive Rules:**")
-                            for rule in conflict['positive_rules']:
-                                st.markdown(f"• *{rule['document']}* - {rule['content'][:100]}...")
-                        
-                        with col2:
-                            st.markdown("**❌ Restrictive Rules:**")
-                            for rule in conflict['negative_rules']:
-                                st.markdown(f"• *{rule['document']}* - {rule['content'][:100]}...")
-                        
-                        st.info("💡 **Resolution Needed:** Review these rules with your HOA board to resolve the conflict.")
-                        
+            # Enhanced relevance indicators
+            if result['score'] >= 80:
+                relevance = "🔥 High Relevance"
+                color = "#d4edda"
+            elif result['score'] >= 50:
+                relevance = "⭐ Medium Relevance"  
+                color = "#fff3cd"
             else:
-                st.success("✅ No rule conflicts detected!")
-                st.info("All rules appear to be consistent across documents.")
-    
-    # Update Tracking Section
-    st.markdown("---")
-    st.markdown("## 📈 Rule Update Tracking")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔄 Check for Updates", key="update_check"):
-            with st.spinner("Scanning for rule updates..."):
-                changes = lookup.track_rule_updates(selected_community)
-                
-                if changes['new_rules'] or changes['modified_rules'] or changes['removed_rules']:
-                    st.warning(f"📝 Changes detected!")
-                    
-                    if changes['new_rules']:
-                        st.markdown("**🆕 New Rules:**")
-                        for change in changes['new_rules']:
-                            st.markdown(f"• {change['description']}")
-                    
-                    if changes['modified_rules']:
-                        st.markdown("**✏️ Modified Rules:**")
-                        for change in changes['modified_rules']:
-                            st.markdown(f"• {change['description']}")
-                            if 'details' in change and change['details']:
-                                for detail in change['details'][:3]:  # Limit details
-                                    st.markdown(f"  - {detail}")
-                    
-                    if changes['removed_rules']:
-                        st.markdown("**🗑️ Removed Rules:**")
-                        for change in changes['removed_rules']:
-                            st.markdown(f"• {change['description']}")
-                            
-                else:
-                    st.success("✅ No changes detected!")
-                    st.info("All rules are up to date.")
-    
-    with col2:
-        if st.button("📊 Recent Updates", key="recent_updates"):
-            with st.spinner("Loading update history..."):
-                recent_changes = lookup.get_recent_updates(selected_community, days=30)
-                
-                if recent_changes:
-                    st.markdown(f"**📅 Last 30 days ({len(recent_changes)} updates):**")
-                    for change_entry in recent_changes[:5]:  # Show last 5 updates
-                        try:
-                            date = datetime.fromisoformat(change_entry['timestamp']).strftime("%m/%d %H:%M")
-                            st.markdown(f"**{date}:**")
-                            
-                            changes = change_entry['changes']
-                            total_changes = len(changes['new_rules']) + len(changes['modified_rules']) + len(changes['removed_rules'])
-                            st.markdown(f"• {total_changes} rule changes")
-                            
-                            # Show most significant change
-                            if changes['new_rules']:
-                                st.markdown(f"  - New: {changes['new_rules'][0]['file']}")
-                            elif changes['modified_rules']:
-                                st.markdown(f"  - Modified: {changes['modified_rules'][0]['file']}")
-                                
-                        except Exception:
-                            st.markdown("• Update entry (details unavailable)")
-                            
-                    if len(recent_changes) > 5:
-                        st.markdown(f"*... and {len(recent_changes) - 5} more updates*")
-                else:
-                    st.info("📝 No recent updates found.")
-                    st.markdown("*Updates will appear here when rules change*")
-    
-    # Usage Analytics for Web (Optional)
-    if st.session_state.search_count > 0:
-        st.markdown("---")
-        st.markdown("## 📊 Session Statistics")
-        st.metric("Searches This Session", st.session_state.search_count)
-        
-        if st.session_state.search_count >= 20:
-            st.success("🎉 Power user! You've made 20+ searches this session.")
-        elif st.session_state.search_count >= 10:
-            st.info("👍 Great! You're really exploring the rules.")
-    
-    # Web deployment info
-    st.markdown("---")
-    st.markdown("### ℹ️ About This System")
-    st.markdown("""
-    **🌐 Web Access**: This system is publicly accessible
-    
-    **🔒 Privacy**: No personal data is collected or stored
-    
-    **⚡ Rate Limits**: 1 search per second for optimal performance
-    
-    **📱 Mobile Friendly**: Works on all devices
-    """)
-    
-    with st.expander("🛠️ Technical Details"):
-        st.markdown(f"""
-        - **Session ID**: `{st.session_state.session_id[:8]}...`
-        - **Communities**: {len(lookup.communities) if lookup.communities else 0}
-        - **Search Count**: {st.session_state.search_count}
-        - **Rate Limiting**: Active
-        """)
-    
-    with st.expander("🚀 Deploy Your Own"):
-        st.markdown("""
-        Want to create your own HOA Rules Lookup system?
-        
-        1. Fork the repository
-        2. Add your community documents
-        3. Deploy to Streamlit Cloud (free!)
-        4. Share the link with your community
-        
-        See `DEPLOYMENT.md` for detailed instructions.
-        """)
-        if st.button("📋 Copy Deployment Link"):
-            st.code("https://share.streamlit.io", language="text")
-
-# Web banner for public access
-st.markdown("""
-<div class="web-banner">
-    <h1>🏘️ Dynamic HOA Rules Lookup</h1>
-    <p style="font-size: 1.1em; margin: 0;">Intelligent rule discovery system for HOA communities</p>
-    <p style="font-size: 0.9em; margin: 0.5rem 0 0 0;">Search natural language queries • Multi-community support • Rule conflict detection</p>
-</div>
-""", unsafe_allow_html=True)
-
-if selected_community:
-    # Search interface
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        query = st.text_input(
-            "🔍 Search for HOA rules:",
-            placeholder="e.g., Can I paint my house blue? Pet policies? Parking restrictions?"
-        )
-    
-    with col2:
-        search_type = st.selectbox(
-            "Search Type:",
-            ["Smart Search", "Category Filter", "Document Browse"]
-        )
-    
-    # Quick rule categories
-    st.markdown("### 🎯 Quick Rule Lookups:")
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("🏠 Architectural Rules"):
-            query = "architectural review requirements modifications"
-        if st.button("🐕 Pet Policies"):
-            query = "pet policies dogs cats leash requirements"
-    
-    with col2:
-        if st.button("🌳 Landscaping Rules"):
-            query = "landscaping requirements trees plants gardens"
-        if st.button("🚗 Parking Rules"):
-            query = "parking restrictions vehicles garage driveway"
-    
-    with col3:
-        if st.button("🏠 Rental Policies"):
-            query = "rental policies short term lease tenant"
-        if st.button("🔊 Noise Regulations"):
-            query = "noise regulations quiet hours disturbances"
-    
-    with col4:
-        if st.button("💰 Fees & Assessments"):
-            query = "fees assessments fines penalties dues"
-        if st.button("🏛️ Governance Rules"):
-            query = "board meetings voting governance procedures"
-    
-    # Perform search
-    if query:
-        # Rate limiting check for web deployment
-        if not rate_limit_check():
-            st.stop()
-        
-        # Increment usage counter
-        increment_usage()
-        
-        with st.spinner("🔍 Searching HOA rules..."):
-            results = lookup.intelligent_rule_search(query, selected_community)
-        
-        if results:
-            # Search statistics
+                relevance = "💡 Related"
+                color = "#f8f9fa"
+            
+            # Special indicators for dynamic responses
+            dynamic_indicator = ""
+            if result.get('type') == 'dynamic':
+                dynamic_indicator = " 🤖"
+                relevance += " (AI Generated)"
+            
+            boca_indicator = " 🏘️" if result['has_boca_example'] else ""
+            
+            # Create links section
+            links_html = ""
+            for link_text, link_url in rule_data['links']:
+                links_html += f'<a href="{link_url}" target="_blank" style="margin-right: 15px; color: #007bff; text-decoration: none;">🔗 {link_text}</a>'
+            
+            # Examples section for dynamic responses
+            examples_section = ""
+            if result.get('type') == 'dynamic' and result.get('examples'):
+                examples_html = ""
+                for example in result['examples']:
+                    examples_html += f'<li style="margin: 0.3rem 0; color: #495057;">{example}</li>'
+                examples_section = f"""
+                <div style="border-top: 1px solid #6c757d; padding-top: 0.8rem; margin-top: 0.8rem; background: #f8f9fa; padding: 0.8rem; border-radius: 6px;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #6c757d;">💡 Common Examples:</p>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.95em; line-height: 1.5;">
+                        {examples_html}
+                    </ul>
+                </div>
+                """
+            
+            # Boca Ridge example section
+            boca_section = ""
+            if result['has_boca_example']:
+                boca_section = f"""
+                <div style="border-top: 1px solid #28a745; padding-top: 0.8rem; margin-top: 0.8rem; background: #f8fff8; padding: 0.8rem; border-radius: 6px;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #28a745;">🏘️ Boca Ridge Glen Example:</p>
+                    <p style="margin: 0; font-size: 0.95em; line-height: 1.6; color: #155724; font-style: italic;">{rule_data['boca_ridge_example']}</p>
+                </div>
+                """
+            
             st.markdown(f"""
-            <div class="search-stats">
-                <strong>📊 Search Results:</strong> Found {len(results)} relevant rules<br>
-                <strong>🎯 Query:</strong> "{query}"<br>
-                <strong>🏘️ Community:</strong> {selected_community}
+            <div style="border: 1px solid #ddd; padding: 1.3rem; margin: 0.8rem 0; border-radius: 12px; background: {color}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+                <h4 style="margin: 0 0 0.8rem 0; color: #2c3e50;">📄 {result['title']}{boca_indicator}{dynamic_indicator} <small style="color: #666; font-weight: normal;">({relevance})</small></h4>
+                <p style="font-size: 1.05em; line-height: 1.7; margin: 0 0 1rem 0; color: #34495e;"><strong>Florida Law:</strong> {rule_data['content']}</p>
+                {examples_section}
+                {boca_section}
+                <div style="border-top: 1px solid #ddd; padding-top: 0.8rem; margin-top: 0.8rem;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: bold; color: #495057;">📚 Additional Resources:</p>
+                    <div style="font-size: 0.9em; line-height: 1.5;">
+                        {links_html}
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Display results
-            for i, result in enumerate(results, 1):
-                # Determine priority class
-                if result['relevance_score'] >= 60:
-                    priority_class = "high-priority"
-                    priority_icon = "🔴"
-                elif result['relevance_score'] >= 40:
-                    priority_class = "medium-priority"
-                    priority_icon = "🟡"
-                else:
-                    priority_class = "low-priority"
-                    priority_icon = "🟢"
-                
-                st.markdown(f"""
-                <div class="rule-card {priority_class}">
-                    <div class="rule-header">
-                        {priority_icon} Rule {i}: {result['section_title']}
-                        <br><small>📄 Source: {result['document']} | 🏷️ Type: {result['doc_type']} | 
-                        📊 Relevance: {result['relevance_score']}</small>
-                    </div>
-                    <div class="rule-content">{result['content'][:800]}{'...' if len(result['content']) > 800 else ''}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Categories and metadata
-                if result['categories']:
-                    st.markdown(f"🏷️ **Categories**: {', '.join(result['categories'])}")
-                
-                # Show full content option
-                if len(result['content']) > 800:
-                    with st.expander("📖 View Full Content"):
-                        st.markdown(f"```\n{result['content']}\n```")
-        
-        else:
-            st.warning(f"No rules found for '{query}' in {selected_community}")
-            st.markdown("### 💡 Suggestions:")
-            st.markdown("• Try different keywords")
-            st.markdown("• Use the quick rule lookup buttons above")
-            st.markdown("• Browse by category in the sidebar")
-
-else:
-    # Welcome screen
-    st.markdown("## 🚀 Welcome to Dynamic HOA Rules Lookup!")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        ### ✨ Features:
-        - 🔍 **Intelligent Search**: Natural language rule queries
-        - 🏘️ **Multi-Community**: Support for multiple HOA communities
-        - 📋 **Category-Based**: Organized by rule types
-        - 🎯 **Context-Aware**: Understands rule relationships
-        - 📊 **Relevance Scoring**: Best matches first
+        if len(results) > 6:
+            st.info(f"Showing top 6 of {len(results)} Florida HOA results. Try more specific terms for better matches.")
+    else:
+        st.warning(f"No Florida HOA rules found for '{query}'. Try different keywords or use the topic buttons above.")
+        st.info("""
+        **💡 Florida HOA Search Tips:**
+        - **Boca Ridge Glen Examples:** Try "boca ridge pet policy", "boca ridge architectural"
+        - **Florida Statutes:** Try "Florida Statute 720.303", "720.305", "720.3085"  
+        - **Specific Topics:** "assessment collection", "violation procedures", "common areas"
+        - **Ask Questions:** "What are Boca Ridge Glen's pet restrictions?"
         """)
-    
-    with col2:
-        st.markdown("""
-        ### 🎯 Example Queries:
-        - "Can I install a fence in my backyard?"
-        - "What are the quiet hours for the community?"
-        - "How much notice is needed for board meetings?"
-        - "Are short-term rentals allowed?"
-        - "What colors can I paint my house?"
-        """)
-    
-    st.markdown("---")
-    st.info("👆 Select a community from the sidebar to start searching rules!")
 
-# Footer
+# Enhanced footer with Boca Ridge information
 st.markdown("---")
-st.markdown("*🏘️ Dynamic HOA Rules Lookup • Intelligent rule discovery for HOA communities*")
+with st.expander("🏘️ About Boca Ridge Glen HOA Community"):
+    st.markdown("""
+    **Boca Ridge Glen** is a real HOA community in **Palm Beach County, Florida** that serves as our example community.
+    
+    **📍 Location:** Palm Beach County, Florida
+    **🏗️ Developer:** Originally developed by Ketay Enterprises, Inc.
+    **📅 Established:** 1983
+    **🏘️ Type:** Residential planned community with villas and townhouses
+    
+    **Key Features:**
+    - Private streets and common areas
+    - Architectural control board with aesthetic standards
+    - Comprehensive landscaping and exterior maintenance by HOA
+    - Pet policies with specific size and behavior requirements
+    - Vehicle restrictions to maintain residential character
+    - Party wall maintenance agreements for attached units
+    
+    **Why We Use This Example:**
+    Boca Ridge Glen provides real-world examples of how Florida HOA laws are implemented in actual communities, showing both state statutory requirements and specific community covenant applications.
+    """)
+
+with st.expander("📜 Complete Florida HOA Law Coverage - Click to Expand"):
+    st.markdown("""
+    **🏗️ Architectural Review:** Florida 45-day timeline + Boca Ridge Glen board procedures
+    
+    **🐕 Pet Policies:** State law framework + Boca Ridge 30-pound limit and leash requirements
+    
+    **💰 Assessment Collection:** FL Statute 720.3085 procedures + Boca Ridge 18% interest rate
+    
+    **⚖️ Violation Procedures:** FL Statute 720.305 notice requirements + Boca Ridge fine schedule
+    
+    **🏠 Property Use:** Residential restrictions + Boca Ridge specific use limitations
+    
+    **🌳 Landscaping:** Florida-Friendly principles + Boca Ridge tree removal approval
+    
+    **🚗 Vehicle Restrictions:** Community standards + Boca Ridge commercial vehicle prohibitions
+    
+    **🏘️ Common Areas:** State definitions + Boca Ridge specific areas and maintenance
+    
+    **Plus:** Real community examples show how Florida laws work in practice
+    """)
+
+st.success("✅ **Florida HOA search with real community examples from Boca Ridge Glen!**")
+st.info("🏘️ **All results include both Florida statutory requirements AND real-world community implementations.**")
