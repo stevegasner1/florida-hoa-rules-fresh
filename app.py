@@ -6,7 +6,7 @@ from collections import Counter
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
 st.markdown("# 🏘️ Florida HOA Rules Lookup")
-st.caption("🔄 Version 2.2 - FORCE DEPLOY FIX (Sept 9, 2025 - 2:30 PM)")
+st.caption("🔄 Version 2.3 - Enhanced Financial Search (Sept 9, 2025 - 3:10 PM)")
 st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
 st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
@@ -393,7 +393,7 @@ def calculate_semantic_similarity(query, rule_content, rule_id):
     # 5. Semantic categories and domain-specific matching
     semantic_categories = {
         'governance': ['board', 'director', 'meeting', 'quorum', 'voting', 'election', 'governance', 'bylaws', 'member', 'majority'],
-        'financial': ['budget', 'financial', 'report', 'reports', 'reporting', 'money', 'fee', 'assessment', 'revenue', 'expense', 'accounting', 'cpa', 'audit', 'fiscal'],
+        'financial': ['budget', 'financial', 'report', 'reports', 'reporting', 'money', 'fee', 'assessment', 'revenue', 'expense', 'accounting', 'cpa', 'audit', 'fiscal', 'financials', 'provide', 'prepared', 'annual', 'quarterly', 'monthly'],
         'property': ['property', 'real estate', 'lot', 'unit', 'residence', 'home', 'building', 'structure', 'land'],
         'maintenance': ['maintenance', 'repair', 'upkeep', 'service', 'contractor', 'work', 'improvement', 'renovation'],
         'rules': ['rule', 'rules', 'regulation', 'restriction', 'requirement', 'guideline', 'policy', 'covenant', 'provision'],
