@@ -6,7 +6,8 @@ from collections import Counter
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
 st.markdown("# 🏘️ Florida HOA Rules Lookup")
-st.caption("🔄 Version 3.1 - Enhanced Financial Records (Sept 9, 2025 - 3:35 PM)")
+st.caption("🚨 Version 4.0 - EMERGENCY DEPLOYMENT FIX (Sept 9, 2025 - 3:55 PM)")
+st.error("⚠️ DEPLOYMENT TEST: If you see this message, the new code is live. If search still fails, there's a fundamental Streamlit caching issue.")
 st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
 st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
@@ -674,8 +675,9 @@ if query:
     
     if results:
         st.markdown(f"### 📋 Found {len(results)} Florida HOA Results for: '{query}'")
+        st.info("🔥 VERSION 4.0 SEMANTIC ALGORITHM - If Board Quorum Requirements isn't #1 for quorum queries, there's a deployment bug!")
         if 'semantic_algorithm_used' in locals():
-            st.caption("✅ Using Advanced Semantic Similarity Algorithm v2.2")
+            st.success("✅ Using Advanced Conversational AI Similarity Algorithm v4.0")
         
         # Show more results for Boca Ridge queries
         max_results = 10 if 'boca' in query.lower() and ('ridge' in query.lower() or 'rules' in query.lower()) else 6
