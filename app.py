@@ -192,6 +192,26 @@ florida_hoa_rules = {
             ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
             ("Sunshine Law Guide", "https://www.myflorida.com/myflorida/government/governmentinformation/sunshine_law.html")
         ]
+    },
+    
+    "board_quorum_requirements_fl": {
+        "content": "Florida Statute 720.306 requires a majority of board members to constitute a quorum for conducting HOA business. For a 5-member board, 3 members are required; for a 7-member board, 4 members are required. Decisions require a majority vote of those present at a properly noticed meeting.",
+        "boca_ridge_example": "Boca Ridge Glen HOA Board requires a majority of directors present to conduct official business, following Florida statutory quorum requirements for valid board actions and voting procedures.",
+        "statute": "720.306",
+        "links": [
+            ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
+            ("Board Governance Guide", "https://www.caionline.org/StateChapters/Florida/Pages/default.aspx")
+        ]
+    },
+    
+    "board_composition_fl": {
+        "content": "Florida HOA boards typically consist of 3, 5, or 7 members as specified in governing documents. Florida Statute 720.306 governs board member eligibility, terms, and election procedures.",
+        "boca_ridge_example": "Boca Ridge Glen Board of Directors composition and member terms are established in the community bylaws in compliance with Florida HOA governance requirements.",
+        "statute": "720.306",
+        "links": [
+            ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
+            ("Board Structure Guidelines", "https://www.caionline.org/")
+        ]
     }
 }
 
@@ -351,6 +371,10 @@ def search_florida_hoa_rules(search_query):
             'water': ['irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'landscape'],
             'conservation': ['water', 'irrigation', 'drought', 'watering', 'landscape', 'friendly'],
             'requirements': ['rules', 'restrictions', 'regulations', 'guidelines', 'policies'],
+            'board': ['director', 'governance', 'meeting', 'quorum', 'voting', 'election', 'member'],
+            'quorum': ['majority', 'board', 'members', 'required', 'meeting', 'voting', 'director'],
+            'meeting': ['board', 'notice', 'quorum', 'voting', 'governance', 'sunshine'],
+            'members': ['board', 'quorum', 'majority', 'director', 'required'],
             'boca': ['ridge', 'glen', 'community', 'example']
         }
         
