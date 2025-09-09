@@ -1,5 +1,7 @@
 import streamlit as st
 import re
+import math
+from collections import Counter
 
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
@@ -323,117 +325,153 @@ def generate_dynamic_response(query):
         ]
     }
 
-# Enhanced Florida search function with dynamic responses
+# Comprehensive semantic similarity system for HOA rule matching
+def calculate_semantic_similarity(query, rule_content, rule_id):
+    """Calculate semantic similarity using multiple algorithms"""
+    
+    # Normalize text
+    query = query.lower().strip()
+    content = rule_content.lower()
+    rule_name = rule_id.lower()
+    
+    # Extract words (remove stop words for better matching)
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can'}
+    
+    query_words = [w for w in re.findall(r'\b\w+\b', query) if w not in stop_words and len(w) > 2]
+    content_words = [w for w in re.findall(r'\b\w+\b', content + ' ' + rule_name) if w not in stop_words and len(w) > 2]
+    
+    if not query_words or not content_words:
+        return 0
+    
+    # 1. TF-IDF-inspired scoring
+    query_freq = Counter(query_words)
+    content_freq = Counter(content_words)
+    
+    tf_idf_score = 0
+    for word in query_words:
+        if word in content_freq:
+            # Term frequency in content
+            tf = content_freq[word] / len(content_words)
+            # Inverse document frequency (simplified - higher weight for less common words)
+            idf = math.log(len(content_words) / (content_freq[word] + 1)) + 1
+            tf_idf_score += tf * idf * 100
+    
+    # 2. Cosine similarity
+    all_words = set(query_words + content_words)
+    query_vector = [query_freq.get(word, 0) for word in all_words]
+    content_vector = [content_freq.get(word, 0) for word in all_words]
+    
+    dot_product = sum(q * c for q, c in zip(query_vector, content_vector))
+    query_magnitude = math.sqrt(sum(q * q for q in query_vector))
+    content_magnitude = math.sqrt(sum(c * c for c in content_vector))
+    
+    cosine_score = 0
+    if query_magnitude > 0 and content_magnitude > 0:
+        cosine_score = (dot_product / (query_magnitude * content_magnitude)) * 100
+    
+    # 3. Jaccard similarity (overlap coefficient)
+    query_set = set(query_words)
+    content_set = set(content_words)
+    intersection = len(query_set.intersection(content_set))
+    union = len(query_set.union(content_set))
+    jaccard_score = (intersection / union * 100) if union > 0 else 0
+    
+    # 4. Phrase matching bonuses
+    phrase_score = 0
+    # Exact query match
+    if query in content:
+        phrase_score += 200
+    
+    # Multi-word phrases
+    if len(query_words) > 1:
+        for i in range(len(query_words) - 1):
+            phrase = f"{query_words[i]} {query_words[i+1]}"
+            if phrase in content:
+                phrase_score += 80
+    
+    # 5. Semantic categories and domain-specific matching
+    semantic_categories = {
+        'governance': ['board', 'director', 'meeting', 'quorum', 'voting', 'election', 'governance', 'bylaws', 'member', 'majority'],
+        'financial': ['budget', 'financial', 'report', 'reports', 'reporting', 'money', 'fee', 'assessment', 'revenue', 'expense', 'accounting', 'cpa', 'audit', 'fiscal'],
+        'property': ['property', 'real estate', 'lot', 'unit', 'residence', 'home', 'building', 'structure', 'land'],
+        'maintenance': ['maintenance', 'repair', 'upkeep', 'service', 'contractor', 'work', 'improvement', 'renovation'],
+        'rules': ['rule', 'rules', 'regulation', 'restriction', 'requirement', 'guideline', 'policy', 'covenant', 'provision'],
+        'legal': ['statute', 'law', 'legal', 'florida', 'compliance', 'violation', 'enforcement', 'penalty', 'fine'],
+        'pets': ['pet', 'dog', 'cat', 'animal', 'leash', 'weight', 'breed', 'registration'],
+        'architectural': ['architectural', 'modification', 'approval', 'construction', 'building', 'design', 'structure'],
+        'landscaping': ['landscape', 'landscaping', 'garden', 'tree', 'plant', 'grass', 'irrigation', 'lawn'],
+        'vehicle': ['vehicle', 'car', 'truck', 'parking', 'garage', 'driveway', 'boat', 'trailer', 'commercial'],
+        'water': ['water', 'irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'usage', 'restriction'],
+        'frequency': ['often', 'frequency', 'when', 'timing', 'schedule', 'annual', 'monthly', 'quarterly', 'produced', 'prepared', 'issued']
+    }
+    
+    category_score = 0
+    query_categories = set()
+    content_categories = set()
+    
+    # Identify categories in query and content
+    for category, terms in semantic_categories.items():
+        if any(term in query_words for term in terms):
+            query_categories.add(category)
+        if any(term in content_words for term in terms):
+            content_categories.add(category)
+    
+    # Boost score for matching categories
+    matching_categories = query_categories.intersection(content_categories)
+    category_score = len(matching_categories) * 50
+    
+    # Penalty for mismatched primary categories
+    mismatch_penalty = 0
+    if query_categories and content_categories:
+        if not matching_categories and len(query_categories) == 1 and len(content_categories) == 1:
+            mismatch_penalty = 50  # Strong penalty for completely unrelated topics
+    
+    # 6. Context-specific boosters
+    context_score = 0
+    
+    # Florida-specific boost
+    if 'florida' in query and ('florida' in content or 'fl' in content):
+        context_score += 30
+    
+    # Boca Ridge specific boost  
+    if 'boca' in query and 'boca' in content:
+        context_score += 40
+    
+    # HOA context boost
+    if 'hoa' in query and 'hoa' in content:
+        context_score += 20
+    
+    # Combine all scores with weights
+    total_score = (
+        tf_idf_score * 0.3 +
+        cosine_score * 0.25 + 
+        jaccard_score * 0.15 +
+        phrase_score * 0.4 +
+        category_score * 0.3 +
+        context_score * 0.2 -
+        mismatch_penalty
+    )
+    
+    return max(0, total_score)  # Ensure non-negative score
+
+# Enhanced Florida search function with semantic similarity
 def search_florida_hoa_rules(search_query):
     if not search_query:
         return []
     
     results = []
-    search_terms = search_query.lower().strip()
-    query_words = re.findall(r'\b\w+\b', search_terms)
     
-    # First, search existing rule database
+    # Search existing rule database using semantic similarity
     for rule_id, rule_data in florida_hoa_rules.items():
-        score = 0
         rule_content = rule_data["content"]
         boca_example = rule_data.get("boca_ridge_example", "")
-        rule_lower = (rule_content + " " + boca_example).lower()
-        rule_name_lower = rule_id.lower()
+        combined_content = rule_content + " " + boca_example
         
-        # Boost for Boca Ridge Glen mentions
-        if 'boca ridge' in search_terms or 'boca ridge glen' in rule_lower:
-            score += 30
+        # Calculate semantic similarity score
+        score = calculate_semantic_similarity(search_query, combined_content, rule_id)
         
-        # Boost for Florida statute references
-        if 'florida statute' in rule_lower or 'florida law' in rule_lower:
-            score += 20
-        
-        # Special boost for water conservation queries
-        if ('water' in search_terms and 'conservation' in search_terms) and ('water' in rule_lower and 'conservation' in rule_lower):
-            score += 80
-        if 'water conservation' in search_terms and 'water conservation' in rule_lower:
-            score += 100
-            
-        # Special boost for financial queries
-        financial_terms = ['financial', 'budget', 'report', 'reports', 'reporting', 'produced', 'often']
-        query_has_financial = any(term in search_terms for term in financial_terms)
-        rule_has_financial = any(term in rule_lower for term in ['financial', 'budget', 'report', 'reports', 'reporting'])
-        
-        if query_has_financial and rule_has_financial:
-            score += 120  # High boost for financial matches
-        elif query_has_financial and 'financial_reporting' in rule_name_lower:
-            score += 150  # Extra boost for exact financial reporting match
-        
-        # Penalty for unrelated topics when financial query is made
-        unrelated_topics = ['pet', 'animal', 'dog', 'cat', 'landscaping', 'vehicle', 'parking']
-        if query_has_financial:
-            for topic in unrelated_topics:
-                if topic in rule_lower or topic in rule_name_lower:
-                    score = max(0, score - 80)  # Heavy penalty but don't go negative
-        
-        # Exact phrase matching (highest score)
-        if search_terms in rule_lower or search_terms in rule_name_lower:
-            score += 100
-        
-        # Multi-word phrase matching
-        if len(query_words) > 1:
-            for i in range(len(query_words) - 1):
-                phrase = f"{query_words[i]} {query_words[i+1]}"
-                if phrase in rule_lower or phrase in rule_name_lower:
-                    score += 60
-        
-        # Individual word matching
-        word_matches = 0
-        for word in query_words:
-            if len(word) > 2:
-                if word in rule_lower:
-                    word_matches += 1
-                    score += 18
-                if word in rule_name_lower:
-                    word_matches += 1
-                    score += 25
-        
-        # Bonus for multiple matches
-        if word_matches > 1:
-            score += word_matches * 12
-        
-        # Enhanced synonym matching for water conservation and other topics
-        florida_synonyms = {
-            'pet': ['dog', 'cat', 'animal', 'leash', 'weight'],
-            'architectural': ['building', 'modification', 'approval', 'construction'],
-            'assessment': ['fee', 'payment', 'collection', 'lien', 'interest'],
-            'fine': ['violation', 'penalty', 'hearing', 'appeal'],
-            'maintenance': ['repair', 'exterior', 'painting', 'landscaping'],
-            'vehicle': ['truck', 'commercial', 'boat', 'trailer', 'parking'],
-            'water': ['irrigation', 'conservation', 'drought', 'watering', 'sprinkler', 'landscape'],
-            'conservation': ['water', 'irrigation', 'drought', 'watering', 'landscape', 'friendly'],
-            'requirements': ['rules', 'restrictions', 'regulations', 'guidelines', 'policies'],
-            'board': ['director', 'governance', 'meeting', 'quorum', 'voting', 'election', 'member'],
-            'quorum': ['majority', 'board', 'members', 'required', 'meeting', 'voting', 'director'],
-            'meeting': ['board', 'notice', 'quorum', 'voting', 'governance', 'sunshine'],
-            'members': ['board', 'quorum', 'majority', 'director', 'required'],
-            'financial': ['budget', 'report', 'reports', 'accounting', 'finances', 'money', 'revenue', 'expenses', 'cpa'],
-            'budget': ['financial', 'money', 'expenses', 'revenue', 'fiscal', 'annual', 'planning'],
-            'report': ['reports', 'reporting', 'financial', 'annual', 'statement', 'statements'],
-            'reports': ['report', 'reporting', 'financial', 'annual', 'statement', 'statements'],
-            'produced': ['prepared', 'created', 'generated', 'published', 'issued'],
-            'often': ['frequency', 'how often', 'when', 'timing', 'schedule'],
-            'boca': ['ridge', 'glen', 'community', 'example']
-        }
-        
-        # Enhanced matching for both directions
-        for main_word, related_words in florida_synonyms.items():
-            if main_word in query_words:
-                for related in related_words:
-                    if related in rule_lower or related in rule_name_lower:
-                        score += 22
-            # Also check if any related words are in query and main word in content
-            for related in related_words:
-                if related in query_words and main_word in rule_lower:
-                    score += 22
-        
-        # Add result if matches found
-        if score > 0:
+        # Add result if score is significant
+        if score > 10:  # Lower threshold since we use more sophisticated scoring
             results.append({
                 'rule_id': rule_id,
                 'rule_data': rule_data,
