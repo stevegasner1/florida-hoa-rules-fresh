@@ -418,6 +418,21 @@ def search_florida_hoa_rules(search_query):
             'examples': dynamic_response.get('examples', [])
         })
     
+    # Filter out low-relevance results - only keep high-quality matches
+    if results:
+        # Get the top score to establish relevance threshold
+        top_score = max(r['score'] for r in results)
+        
+        # Keep results that are at least 40% of the top score or have score >= 50
+        relevance_threshold = max(top_score * 0.4, 50)
+        high_quality_results = [r for r in results if r['score'] >= relevance_threshold]
+        
+        # If we have good results, use them; otherwise keep top 3
+        if len(high_quality_results) >= 3:
+            results = high_quality_results[:3]  # Limit to top 3 most relevant
+        else:
+            results = results[:3]  # Fallback to top 3
+    
     # Sort by score (highest first)
     results.sort(key=lambda x: x['score'], reverse=True)
     return results
