@@ -6,6 +6,7 @@ from collections import Counter
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
 st.markdown("# 🏘️ Florida HOA Rules Lookup")
+st.caption("🔄 Version 2.1 - Semantic Similarity (Sept 9, 2025)")
 st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
 st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
