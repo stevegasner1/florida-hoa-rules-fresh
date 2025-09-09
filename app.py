@@ -6,7 +6,7 @@ from collections import Counter
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
 st.markdown("# 🏘️ Florida HOA Rules Lookup")
-st.caption("🔄 Version 3.0 - Conversational AI Search (Sept 9, 2025 - 3:20 PM)")
+st.caption("🔄 Version 3.1 - Enhanced Financial Records (Sept 9, 2025 - 3:35 PM)")
 st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
 st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
@@ -218,12 +218,13 @@ florida_hoa_rules = {
     },
     
     "financial_reporting_requirements_fl": {
-        "content": "Florida Statute 720.308 requires HOAs to prepare annual financial reports within 90 days after the end of the fiscal year. Associations with annual revenues over $150,000 must have reports reviewed by a CPA. Monthly financial statements must be available to members upon request.",
-        "boca_ridge_example": "Boca Ridge Glen provides annual financial reports to homeowners within Florida's required timeline, including balance sheets, income statements, and reserve fund status as mandated by FL Statute 720.308.",
+        "content": "Florida HOAs must produce and maintain comprehensive financial records under Florida Statute 720.308. Required reports include: annual budgets, financial statements, tax returns, reserve fund information, and detailed receipts/expenditures records. Financial and accounting records must be kept for at least 7 years according to good accounting practices. Records must include accurate, itemized, and detailed records of all receipts and expenditures, plus a current account and periodic statement for each member showing assessment due dates, payment dates, amounts, and current balance due. Financial records must be made available to homeowners within 10 business days of request.",
+        "boca_ridge_example": "Boca Ridge Glen maintains comprehensive financial records including annual budgets, detailed financial statements, tax returns, and reserve fund reports as required by FL Statute 720.308. All financial records are kept for the required 7-year retention period and made available to homeowners within 10 business days upon request.",
         "statute": "720.308",
         "links": [
             ("Florida Statute 720.308", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.308.html"),
-            ("Financial Reporting Guide", "https://www.caionline.org/")
+            ("NextGen Florida HOA Records Guide", "https://nextgenfla.com/blogs/f/720-record-keeping-access-maintenance"),
+            ("DBPR HOA Information", "https://www.myfloridalicense.com/")
         ]
     },
     
@@ -428,7 +429,7 @@ def calculate_semantic_similarity(query, rule_content, rule_id):
     # 5. Semantic categories and domain-specific matching
     semantic_categories = {
         'governance': ['board', 'director', 'meeting', 'quorum', 'voting', 'election', 'governance', 'bylaws', 'member', 'majority'],
-        'financial': ['budget', 'financial', 'report', 'reports', 'reporting', 'money', 'fee', 'assessment', 'revenue', 'expense', 'accounting', 'cpa', 'audit', 'fiscal', 'financials', 'provide', 'prepared', 'annual', 'quarterly', 'monthly'],
+        'financial': ['budget', 'financial', 'report', 'reports', 'reporting', 'money', 'fee', 'assessment', 'revenue', 'expense', 'accounting', 'cpa', 'audit', 'fiscal', 'financials', 'provide', 'prepared', 'annual', 'quarterly', 'monthly', 'produce', 'produced', 'records', 'statements', 'maintain', 'kept'],
         'property': ['property', 'real estate', 'lot', 'unit', 'residence', 'home', 'building', 'structure', 'land'],
         'maintenance': ['maintenance', 'repair', 'upkeep', 'service', 'contractor', 'work', 'improvement', 'renovation'],
         'rules': ['rule', 'rules', 'regulation', 'restriction', 'requirement', 'guideline', 'policy', 'covenant', 'provision'],
