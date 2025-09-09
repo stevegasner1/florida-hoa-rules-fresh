@@ -6,7 +6,7 @@ from collections import Counter
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
 st.markdown("# 🏘️ Florida HOA Rules Lookup")
-st.caption("🔄 Version 2.3 - Enhanced Financial Search (Sept 9, 2025 - 3:10 PM)")
+st.caption("🔄 Version 3.0 - Conversational AI Search (Sept 9, 2025 - 3:20 PM)")
 st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
 st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
@@ -326,19 +326,54 @@ def generate_dynamic_response(query):
         ]
     }
 
-# Comprehensive semantic similarity system for HOA rule matching
+# Enhanced conversational similarity system for natural HOA rule matching
 def calculate_semantic_similarity(query, rule_content, rule_id):
-    """Calculate semantic similarity using multiple algorithms"""
+    """Calculate semantic similarity using multiple algorithms with conversational understanding"""
     
     # Normalize text
     query = query.lower().strip()
     content = rule_content.lower()
     rule_name = rule_id.lower()
     
-    # Extract words (remove stop words for better matching)
-    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can'}
+    # Enhanced conversational preprocessing
+    conversational_mappings = {
+        # Question words to intent
+        'how often': 'frequency',
+        'how many': 'quantity', 
+        'how much': 'amount',
+        'when': 'timing',
+        'what are': 'definition',
+        'can we': 'permission',
+        'do we need': 'requirement',
+        'are we allowed': 'permission',
+        'what happens if': 'consequence',
+        
+        # Conversational phrases to formal terms  
+        'provide financials': 'financial reports',
+        'give financial info': 'financial reports',
+        'money stuff': 'financial matters',
+        'budget info': 'budget information',
+        'pay fees': 'assessment collection',
+        'get fined': 'violation penalties',
+        'board stuff': 'board governance',
+        'meeting rules': 'meeting procedures',
+        'pet rules': 'pet restrictions',
+        'landscaping rules': 'landscaping requirements',
+        'parking rules': 'vehicle restrictions',
+        'building changes': 'architectural modifications',
+        'house modifications': 'architectural modifications'
+    }
     
-    query_words = [w for w in re.findall(r'\b\w+\b', query) if w not in stop_words and len(w) > 2]
+    # Apply conversational mappings
+    processed_query = query
+    for phrase, formal_term in conversational_mappings.items():
+        if phrase in processed_query:
+            processed_query = processed_query.replace(phrase, formal_term)
+    
+    # Extract words (remove stop words for better matching)  
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'we', 'us', 'our'}
+    
+    query_words = [w for w in re.findall(r'\b\w+\b', processed_query) if w not in stop_words and len(w) > 2]
     content_words = [w for w in re.findall(r'\b\w+\b', content + ' ' + rule_name) if w not in stop_words and len(w) > 2]
     
     if not query_words or not content_words:
@@ -427,7 +462,44 @@ def calculate_semantic_similarity(query, rule_content, rule_id):
         if not matching_categories and len(query_categories) == 1 and len(content_categories) == 1:
             mismatch_penalty = 50  # Strong penalty for completely unrelated topics
     
-    # 6. Context-specific boosters
+    # 6. Conversational intent matching
+    intent_score = 0
+    
+    # Detect query intent and match with rule content
+    intent_patterns = {
+        'frequency': ['often', 'frequency', 'timing', 'when', 'schedule'],
+        'quantity': ['many', 'much', 'number', 'amount', 'count'],
+        'permission': ['allowed', 'can', 'may', 'permitted', 'legal'],
+        'requirement': ['must', 'required', 'need', 'mandatory', 'shall'],
+        'process': ['how', 'procedure', 'steps', 'process', 'method'],
+        'definition': ['what', 'define', 'meaning', 'definition'],
+        'consequence': ['happens', 'penalty', 'fine', 'violation', 'consequence']
+    }
+    
+    # Check for intent matches
+    query_intent = None
+    for intent, patterns in intent_patterns.items():
+        if any(pattern in query_words for pattern in patterns):
+            query_intent = intent
+            break
+    
+    # Boost score if intent matches rule type
+    if query_intent:
+        intent_boosts = {
+            'frequency': ['reporting', 'annual', 'monthly', 'schedule', 'timeline'],
+            'quantity': ['majority', 'quorum', 'members', 'days', 'percent'],
+            'permission': ['may', 'allowed', 'permitted', 'authorize'],
+            'requirement': ['required', 'must', 'shall', 'mandatory'],
+            'process': ['procedure', 'process', 'steps', 'application'],
+            'consequence': ['fine', 'penalty', 'violation', 'enforcement']
+        }
+        
+        if query_intent in intent_boosts:
+            boost_terms = intent_boosts[query_intent]
+            if any(term in content_words for term in boost_terms):
+                intent_score += 60  # Strong intent match bonus
+    
+    # 7. Context-specific boosters
     context_score = 0
     
     # Florida-specific boost
@@ -444,12 +516,13 @@ def calculate_semantic_similarity(query, rule_content, rule_id):
     
     # Combine all scores with weights
     total_score = (
-        tf_idf_score * 0.3 +
-        cosine_score * 0.25 + 
-        jaccard_score * 0.15 +
-        phrase_score * 0.4 +
-        category_score * 0.3 +
-        context_score * 0.2 -
+        tf_idf_score * 0.25 +      # Reduced weight for TF-IDF
+        cosine_score * 0.2 +       # Reduced weight for cosine  
+        jaccard_score * 0.1 +      # Reduced weight for Jaccard
+        phrase_score * 0.3 +       # Reduced weight for phrases
+        category_score * 0.25 +    # Reduced weight for categories
+        intent_score * 0.4 +       # High weight for intent matching
+        context_score * 0.15 -     # Reduced weight for context
         mismatch_penalty
     )
     
