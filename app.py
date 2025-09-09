@@ -504,15 +504,24 @@ def search_florida_hoa_rules(search_query):
         # Get the top score to establish relevance threshold
         top_score = max(r['score'] for r in results)
         
-        # Keep results that are at least 40% of the top score or have score >= 50
-        relevance_threshold = max(top_score * 0.4, 50)
-        high_quality_results = [r for r in results if r['score'] >= relevance_threshold]
+        # Special handling for Boca Ridge queries - show more results
+        is_boca_query = 'boca' in search_query.lower() and ('ridge' in search_query.lower() or 'rules' in search_query.lower())
         
-        # If we have good results, use them; otherwise keep top 3
-        if len(high_quality_results) >= 3:
-            results = high_quality_results[:3]  # Limit to top 3 most relevant
+        if is_boca_query:
+            # For Boca Ridge queries, show up to 10 high-scoring results
+            relevance_threshold = max(top_score * 0.6, 60)
+            high_quality_results = [r for r in results if r['score'] >= relevance_threshold]
+            results = high_quality_results[:10]  # Show up to 10 Boca Ridge rules
         else:
-            results = results[:3]  # Fallback to top 3
+            # Normal filtering for specific queries
+            relevance_threshold = max(top_score * 0.4, 50)
+            high_quality_results = [r for r in results if r['score'] >= relevance_threshold]
+            
+            # If we have good results, use them; otherwise keep top 3
+            if len(high_quality_results) >= 3:
+                results = high_quality_results[:3]  # Limit to top 3 most relevant
+            else:
+                results = results[:3]  # Fallback to top 3
     
     # Sort by score (highest first)
     results.sort(key=lambda x: x['score'], reverse=True)
@@ -589,7 +598,10 @@ if query:
     if results:
         st.markdown(f"### 📋 Found {len(results)} Florida HOA Results for: '{query}'")
         
-        for i, result in enumerate(results[:6], 1):
+        # Show more results for Boca Ridge queries
+        max_results = 10 if 'boca' in query.lower() and ('ridge' in query.lower() or 'rules' in query.lower()) else 6
+        
+        for i, result in enumerate(results[:max_results], 1):
             rule_data = result['rule_data']
             
             # Enhanced relevance indicators
