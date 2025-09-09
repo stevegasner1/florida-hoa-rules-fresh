@@ -212,6 +212,26 @@ florida_hoa_rules = {
             ("Florida Statute 720.306", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.306.html"),
             ("Board Structure Guidelines", "https://www.caionline.org/")
         ]
+    },
+    
+    "financial_reporting_requirements_fl": {
+        "content": "Florida Statute 720.308 requires HOAs to prepare annual financial reports within 90 days after the end of the fiscal year. Associations with annual revenues over $150,000 must have reports reviewed by a CPA. Monthly financial statements must be available to members upon request.",
+        "boca_ridge_example": "Boca Ridge Glen provides annual financial reports to homeowners within Florida's required timeline, including balance sheets, income statements, and reserve fund status as mandated by FL Statute 720.308.",
+        "statute": "720.308",
+        "links": [
+            ("Florida Statute 720.308", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.308.html"),
+            ("Financial Reporting Guide", "https://www.caionline.org/")
+        ]
+    },
+    
+    "budget_requirements_fl": {
+        "content": "Florida Statute 720.308 requires HOAs to adopt an annual budget at least 14 days before the start of the fiscal year. The budget must be provided to all members and include operating expenses, reserves, and any special assessments planned.",
+        "boca_ridge_example": "Boca Ridge Glen adopts its annual budget in compliance with Florida requirements, providing detailed financial planning documents to homeowners before the fiscal year begins.",
+        "statute": "720.308", 
+        "links": [
+            ("Florida Statute 720.308", "http://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0720/Sections/0720.308.html"),
+            ("Budget Planning Guide", "https://www.apra-usa.com/")
+        ]
     }
 }
 
@@ -333,6 +353,23 @@ def search_florida_hoa_rules(search_query):
             score += 80
         if 'water conservation' in search_terms and 'water conservation' in rule_lower:
             score += 100
+            
+        # Special boost for financial queries
+        financial_terms = ['financial', 'budget', 'report', 'reports', 'reporting', 'produced', 'often']
+        query_has_financial = any(term in search_terms for term in financial_terms)
+        rule_has_financial = any(term in rule_lower for term in ['financial', 'budget', 'report', 'reports', 'reporting'])
+        
+        if query_has_financial and rule_has_financial:
+            score += 120  # High boost for financial matches
+        elif query_has_financial and 'financial_reporting' in rule_name_lower:
+            score += 150  # Extra boost for exact financial reporting match
+        
+        # Penalty for unrelated topics when financial query is made
+        unrelated_topics = ['pet', 'animal', 'dog', 'cat', 'landscaping', 'vehicle', 'parking']
+        if query_has_financial:
+            for topic in unrelated_topics:
+                if topic in rule_lower or topic in rule_name_lower:
+                    score = max(0, score - 80)  # Heavy penalty but don't go negative
         
         # Exact phrase matching (highest score)
         if search_terms in rule_lower or search_terms in rule_name_lower:
@@ -375,6 +412,12 @@ def search_florida_hoa_rules(search_query):
             'quorum': ['majority', 'board', 'members', 'required', 'meeting', 'voting', 'director'],
             'meeting': ['board', 'notice', 'quorum', 'voting', 'governance', 'sunshine'],
             'members': ['board', 'quorum', 'majority', 'director', 'required'],
+            'financial': ['budget', 'report', 'reports', 'accounting', 'finances', 'money', 'revenue', 'expenses', 'cpa'],
+            'budget': ['financial', 'money', 'expenses', 'revenue', 'fiscal', 'annual', 'planning'],
+            'report': ['reports', 'reporting', 'financial', 'annual', 'statement', 'statements'],
+            'reports': ['report', 'reporting', 'financial', 'annual', 'statement', 'statements'],
+            'produced': ['prepared', 'created', 'generated', 'published', 'issued'],
+            'often': ['frequency', 'how often', 'when', 'timing', 'schedule'],
             'boca': ['ridge', 'glen', 'community', 'example']
         }
         
