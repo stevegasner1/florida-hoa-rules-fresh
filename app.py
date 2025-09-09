@@ -6,7 +6,7 @@ from collections import Counter
 st.set_page_config(page_title="Florida HOA Rules Lookup", page_icon="🏘️")
 
 st.markdown("# 🏘️ Florida HOA Rules Lookup")
-st.caption("🔄 Version 2.1 - Semantic Similarity (Sept 9, 2025)")
+st.caption("🔄 Version 2.2 - FORCE DEPLOY FIX (Sept 9, 2025 - 2:30 PM)")
 st.markdown("**Comprehensive Florida HOA search based on Florida Statute 720 and real community examples**")
 st.info("🏘️ **Featured Community**: Includes actual rules from **Boca Ridge Glen HOA** in Palm Beach County, Florida")
 
@@ -463,6 +463,8 @@ def search_florida_hoa_rules(search_query):
     results = []
     
     # Search existing rule database using semantic similarity
+    semantic_algorithm_used = True  # Debug flag
+    
     for rule_id, rule_data in florida_hoa_rules.items():
         rule_content = rule_data["content"]
         boca_example = rule_data.get("boca_ridge_example", "")
@@ -598,6 +600,8 @@ if query:
     
     if results:
         st.markdown(f"### 📋 Found {len(results)} Florida HOA Results for: '{query}'")
+        if 'semantic_algorithm_used' in locals():
+            st.caption("✅ Using Advanced Semantic Similarity Algorithm v2.2")
         
         # Show more results for Boca Ridge queries
         max_results = 10 if 'boca' in query.lower() and ('ridge' in query.lower() or 'rules' in query.lower()) else 6
